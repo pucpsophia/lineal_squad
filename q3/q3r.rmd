@@ -1,0 +1,37 @@
+---
+title: "Examen Final Modelos Lineales"
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+
+```
+
+# **Pregunta 3** 
+## *Regresion lineal SWISS*
+### *Descripcion de datos*
+
+$\textbf{Fertility }$ Ig. medida común de fertilidad estandarizada
+
+$\textbf{Agriculture }$ % de hombres involucrados en la agricultura como ocupacion
+
+$\textbf{Examination }$ % de reclutas que reciben la calificacion mas alta en el examen del ejercito
+
+$\textbf{Education }$ % educacion mas allá de la escuela primaria para reclutas.
+
+$\textbf{Catholic }$ % 'catolico' (a diferencia de 'protestante').
+
+$\textbf{Infant.Mortality }$ nacidos vivos que viven menos de 1 anhio.
+
+```{r code1, exercise=TRUE} 
+data(swiss)
+
+g <- lm(Employed ~ GNP + Population, data=longley)
+summary(g,cor=T)
+
+```
