@@ -1,5 +1,5 @@
 ---
-title: "Examen Final Modelos Lineales"
+title: "Examen Final"
 output: 
   learnr::tutorial:
     progressive: true
@@ -9,6 +9,7 @@ runtime: shiny_prerendered
 
 ```{r setup, include=FALSE}
 library(learnr)
+library(MASS)
 
 ```
 
@@ -30,8 +31,149 @@ $\textbf{Infant.Mortality }$ nacidos vivos que viven menos de 1 anhio.
 
 ```{r code1, exercise=TRUE} 
 data(swiss)
+colnames(swiss)
 
-g <- lm(Employed ~ GNP + Population, data=longley)
-summary(g,cor=T)
+```
 
+
+```{r code2, exercise=TRUE} 
+str(swiss)
+summary(swiss)
+```
+
+
+```{r code3, exercise=TRUE}
+hist(swiss$Agriculture , col="#01FF70", main="", xlab="Agriculture", ylab="Frecuencia")
+hist(swiss$Examination , col="#01FF70", main="", xlab="Examination", ylab="Frecuencia")
+hist(swiss$Education , col="#01FF70", main="", xlab="Education", ylab="Frecuencia")
+hist(swiss$Catholic , col="#01FF70", main="", xlab="Catholic", ylab="Frecuencia")
+hist(swiss$Infant.Mortality, col="#01FF70", main="", xlab="Mortality", ylab="Frecuencia")
+hist(swiss$Fertility , col="#01FF70", main="", xlab="Fertilidad", ylab="Frecuencia")
+```
+
+### *Regresion lineal*
+
+```{r code4, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+summary(lm1)
+
+```
+
+Lo primera observación es que tenemos un buen y hay varias variables (la mayoría) con una buena
+significancia. Un punto que no debería suceder pero siempre ocurre es que el intercepto no es 0, esto podría
+causar que los valores estimados de Fertilidad salgan menores a 0, lo cual en la realidad sería imposible pues no
+se puede recaudar negativo. A pesar de esto, dicho valor de intercepto asegura que se cumplan los mínimos
+cuadrados.
+
+
+```{r code5, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+lm1$coefficients
+```
+Lo que significan estos coeficientes, por ejemplo el último de la lista Infant.Mortality nos dice que si todas las otros
+otros regresores se mantuvieran constantes y solamente ese cambiara en una unidad, el Fertility se vería
+afectado en 1.07705. 
+
+
+### *Valores reales vs valores estimados*
+
+```{r code6, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+plot(lm1$fitted.values, swiss$Fertility)
+abline(0, 1, col = 2)
+```
+### Graficamos los Residuales vs. los Valores estimados
+
+
+```{r code7, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+plot(lm1$fitted.values, lm1$residuals)
+abline(0, 0, col = 2)
+```
+
+### Primero atacaremos por la distancia de Cook (Cook's Distance) para poder encontrar los outliers
+
+
+```{r code8, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+plot(cooks.distance(lm1))
+```
+
+Consideramos como límite y n/4, como se puede ver en el gráfico, habrán varios valores que calificarán como outliers y por lo tanto se sacarán para poder estimar un nuevo modelo lineal
+
+```{r code9, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+indices.cook <- which(cooks.distance(lm1) >= 4/nrow(swiss))
+swiss <-swiss[-indices.cook, ]
+lm2 <- lm(formula = Fertility ~ ., data = swiss)
+summary(lm2)
+```
+
+El principal cambio se encuentre en que el valor de $R^2$ subio, por lo tanto al momento de graficar valores reales contra los estimados, los puntos deberían estar más pegados a la línea que pasara entre ellos.
+
+
+Graficamos los Valores reales vs. los Valores estimados
+
+
+```{r code10, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+indices.cook <- which(cooks.distance(lm1) >= 4/nrow(swiss))
+swiss <-swiss[-indices.cook, ]
+lm2 <- lm(formula = Fertility ~ ., data = swiss)
+plot(lm2$fitted.values, swiss$Fertility)
+abline(0, 1, col = 2)
+
+```
+Se pueden apreciar ahora los puntos mas cercanos a la linea roja. Por otra parte, 
+
+Graficamos los Residuales vs. los Valores estimados
+
+```{r code11, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+indices.cook <- which(cooks.distance(lm1) >= 4/nrow(swiss))
+swiss <-swiss[-indices.cook, ]
+lm2 <- lm(formula = Fertility ~ ., data = swiss)
+
+plot(lm2$fitted.values, lm2$residuals)
+abline(0, 0, col = 2)
+
+```
+
+Para descartar que estemos utilizando muchos regresores, los cuales no me estén brindando más información de la
+que ya me están brindando los otros. Para arreglar esto utilizaremos el Akaike Information Criterion (AIC) con un stepwise en ambas direcciones
+
+
+```{r code12, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+indices.cook <- which(cooks.distance(lm1) >= 4/nrow(swiss))
+swiss <-swiss[-indices.cook, ]
+lm2 <- lm(formula = Fertility ~ ., data = swiss)
+step<-stepAIC(lm2, direction = "both")
+summary(step)
+```
+
+Seguimos la recomendación y hacemos un modelo sin la variable Education. El resultado no debería
+mejorar sustancialmente, en general debería quedarse igual y solamente se habrían eliminado variables que no
+aportaban al modelo.
+
+
+```{r code13, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+indices.cook <- which(cooks.distance(lm1) >= 4/nrow(swiss))
+swiss <-swiss[-indices.cook, ]
+swiss <- swiss[ , !colnames(swiss) %in% c("Education")]
+lm3 <- lm(formula = Fertility ~ ., data = swiss)
+summary(lm3)
+```
+
+Para comprobar que este cambio no ha sido significativo hacemos la tabla de ANOVA entre el modelo anterior y este último modelo.
+
+```{r code14, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+indices.cook <- which(cooks.distance(lm1) >= 4/nrow(swiss))
+swiss <- swiss[-indices.cook, ]
+lm2 <- lm(formula = Fertility ~ ., data = swiss)
+swiss <- swiss[ , !colnames(swiss) %in% c("Education")]
+lm3 <- lm(formula = Fertility ~ ., data = swiss)
+anova(lm2, lm3)
 ```
