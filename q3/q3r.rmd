@@ -12,6 +12,8 @@ library(learnr)
 library(MASS)
 library(car)
 library("PerformanceAnalytics")
+library(lmtest)
+library(glmnet)
 
 ```
 
@@ -125,14 +127,17 @@ plot(lm1, which=c(2))
 ```
 **Los errores no estan correlacionados**
 
+AutocorrelaciÛn significa la correlaciÛn de los valores de una misma variable ordenados en el tiempo (con datos de
+series temporales) o en el espacio (con datos espaciales). 
+
 ```{r}
+
+dwtest(lm1)
 
 par(mfrow=c(1,1))
 plot(lm1, which=c(3))
 
 ```
-
-
 **Multicolinealidad de los regresores es minima**
 
 Buscaremos variables que estÈn bastante correlacionadas con las dem·s y que, por ello, no estÈn aportando m·s al modelo y que podrÌan estar distorsionando las predicciones generando overfitting.
@@ -140,11 +145,150 @@ Buscaremos variables que estÈn bastante correlacionadas con las dem·s y que, por
 
 ```{r}
 
+summary(lm1)
+summary(lm2)
+
+lm2 = lm(formula = Fertility ~ Catholic + Agriculture +  Education + Examination +  Infant.Mortality, data = swiss)
+summary(lm1)
+
+lm3 = lm(formula = Fertility ~ Examination + Agriculture + Education  +  Catholic + Infant.Mortality, data = swiss)
+summary(lm3)
+
+MASS::stepAIC(lm1)
+
+install.packages("mctest")
+library(mctest)
+omcdiag(swiss[,-1], swiss[,1])
+imcdiag(swiss[,-1], swiss[,1])
+install.packages("ppcor")
+library(ppcor)
+pcor(swiss, method = "pearson")
+
 car::vif(lm1)
 
 chart.Correlation(swiss, histogram=FALSE, pch=19)
 
 ```
+
+x = model.matrix(Fertility~.,swiss)[,-c(1)] # matriz de covariables
+y = swiss$Fertility              # vector respuesta 
+
+
+set.seed(1)
+train = sample(1:nrow(x), nrow(x)/2)  # escoge 50% de los datos para entrenamiento
+test = (-train) 
+y.test = y[test]
+
+
+grid = 10^seq(10,-2,length=100) #grid de 100 valores para lambda (de 10^10 a 10^{-2})
+ridge.mod = glmnet(x,y,alpha=0,lambda=grid) #alpha= 0 => regresion ridge
+ridge.mod
+
+set.seed(1)
+cv.out = cv.glmnet(x[train,], y[train], alpha=0,nfolds=5)
+plot(cv.out,main="Ridge regression") # Traza la curva de validacion cruzada y las curvas de desviacion estandar superior e inferior, en funci√≥n de los valores de lambda utilizados.
+bestlambda = cv.out$lambda.min #escoge el mejor valor de lambda (el que alcanza el menor ECM - error cuadratico medio -  en la validacion cruzada)
+
+
+ridge.pred = predict(ridge.mod,s=bestlambda,newx=x[test,])
+mean((ridge.pred-y.test)^2)
+
+
+library(psych)
+pairs.panels(swiss[c(1,2,3,4,5,6)])
+summary(lm1)
+
+tt =  as.numeric( predict(lm1, as.data.frame(x[test,])))
+tt_test = as.numeric(y.test)
+length(tt)
+length(y.test)
+
+mean((tt -tt_test)^2)  
+
+
+out=glmnet(x,y,alpha=0)
+predict(out,type="coefficients",s=bestlambda) #muestra los coeficientes del modelo final
+
+y_predicted = predict(out, as.matrix(swiss[,-1]), s=bestlambda) 
+
+
+lm7 = lm(Fertility~.,swiss[train,])
+summary(lm7)
+
+lm_predicted = predict(lm7,  as.data.frame(swiss[,-1]))
+
+lm_predicted = as.numeric(lm_predicted)
+
+y_predicted = as.numeric(y_predicted)
+value_y = swiss[,1]
+sst <- sum((value_y - mean(value_y))^2)
+sse <- sum((y_predicted - value_y)^2)
+
+sse_lm <- sum((lm_predicted - value_y)^2)
+
+# R squared
+rsq <- 1 - sse / sst
+rsq
+
+rsq_lm <- 1 - sse_lm / sst
+
+coef(out)
+summary(lm1)
+
+lm5 = lm(Fertility~., )
+pairs.panels(swiss2)
+summary(lm5)
+vif(lm5)
+
+
+head(swiss)
+
+
+
+
+setCoeffs <- function(frml, weights, len){
+  el <- paste0("offset(", weights[-1], "*", 
+               unlist(strsplit(as.character(frml)[-(1:2)], " +\\+ +")), ")")
+  el <- c(paste0("offset(rep(", weights[1], ",", len, "))"), el)                                 
+  as.formula(paste(as.character(frml)[2], "~", 
+                   paste(el, collapse = " + "), " + -1"))
+}
+
+frml <- Fertility ~ Catholic + Agriculture +  Education + Examination +  Infant.Mortality
+mod <- lm( frml , data = swiss)
+weights <- mod$coef
+weights[1] <- 61.50870339
+weights[2] <- 0.06658406
+weights[3] <- -0.06426770
+weights[4] <- -0.55076771
+weights[5] <- -0.34738082
+weights[5] <- 1.04925959
+mod2 <- update(mod, setCoeffs(frml, weights, nrow(swiss)))
+
+summary(mod2)
+plot(mod2)
+vif(out)
+
+ 
+Agriculture      
+Examination      
+Education        
+Catholic          
+Infant.Mortality  
+
+car::vif(lm1)
+
+
+
+lasso.mod=glmnet(x[train,],y[train],alpha=1,lambda=grid)
+
+set.seed(1)
+cv.out2=cv.glmnet(x[train,],y[train],alpha=1,nfolds=5)
+plot(cv.out2,main="Lasso regression")
+bestlam=cv.out2$lambda.min #igual a 20.12811
+bestlam
+
+
 
 #### Primero atacaremos por la distancia de Cook (Cook's Distance) para poder encontrar los outliers
 

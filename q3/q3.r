@@ -67,7 +67,7 @@ library(corrplot)
 corrplot(mat.cor, method = "square", order = "AOE")
 
 ggpairs(swiss) # cor(data_scaled)
-
+install.packages("PerformanceAnalytics")
 library("PerformanceAnalytics")
 chart.Correlation(swiss, histogram=FALSE, pch=19)
 
@@ -89,18 +89,10 @@ shapiro.test(lm2$residuals) # h0 es normal  > 0.05
 
   # usar grafico residuals vs fitted
 
-# That the errors have a constant variance
 
-library(car)
-ncvTest(lm2)
-# h0 homocedasticidad > 0.05
-# h1 heterocedasticidad 
 
-  # usar grafico scale location
 
-# That the effect of the independent variables on the dependent variable are linear and additive
 
-# That multi-collinearity is at a minimum
 
 
 
