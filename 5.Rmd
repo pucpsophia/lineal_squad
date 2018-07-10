@@ -1,0 +1,144 @@
+---
+title: "Diseño en bloques completos al azar"
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+  
+library(learnr)
+library(planor)
+library(multcomp)
+
+silos <- read.delim("C:/Users/USUARIO-PC/Downloads/silos.txt")
+attach(silos)
+
+```
+
+
+## **Pregunta 5** 
+En una empresa lechera se tienen varios silos para almacenar leche (cisternas de 60 000 L). Un aspecto crítico para que se conserve la leche es la temperatura de almacenamiento. Se sospecha que en algunos silos hay problemas, por ello, durante cinco días se decide registrar la temperatura a cierta hora crítica. Obviamente la temperatura de un día a otro es una fuente de variabilidad que podría impactar la variabilidad total. El conjunto de datos se encuentra en el archivo silos.txt.
+
+**a)	¿En este problema, ¿cuál es el factor de tratamiento y cuál el factor de bloque?** 
+
+El factor de tratamiento son los silos de leche A, B, C, D y E.
+
+El factor de bloques son los días de la semana. Los bloques son las variables adicionales que se incorporan de manera explícita en un experimento para lograr una mayor precisión en la comparación.
+
+**b)	Suponiendo un DBCA (Diseño en bloques completos al azar), formule las hipótesis adecuadas y el modelo estadístico.** 
+
+La variable de respuesta es la temperatura de los silos en los que se almacena la leche. Para comparar la temperatura se plantea la siguiente hipótesis sobre la temperatura de los silos:
+
+Modelo estadístico:
+  $$Y_{ij}=\mu+\tau_i+y_j+\epsilon_{ij}$$ 
+$Y_{ij}$ corresponde a la medición según el tratamiento y bloque, $\mu$ es la media poblacional de la temperatura, $\tau_i$ el efecto debido al tratamiento e $y_j$ es el efecto debido al bloque y $\epsilon_{ij}$ es el error aleatorio. Los errores se distribuyen de manera normal con
+media cero y varianza constante y son independientes entre sí, $i=1, 2, ...k$ y $j=1, 2, ...b$.
+  
+  $$H_0: \mu_A=\mu_B=\mu_C=\mu_D=\mu_E=\mu$$
+  $$H_1: \mu_i \neq \mu_j \quad \text{para algún} \quad i \neq j=(A, B, C, D, E).$$
+Donde:
+
+$H_0$ La hipótesis nula.
+
+$H_1$ La hipótesis alternativa.
+
+$\mu_i$ La temperatura media de los silos.
+
+
+**c)	¿Hay diferencia entre los silos?** 
+
+```{r code22, exercise=TRUE} 
+# ANOVA
+tratamiento<-Silo
+bloque<-Dia
+mod<-lm(temperatura~tratamiento+as.factor(bloque),silos)
+anva<-anova(mod)
+anva
+```
+
+El valor p de los silos (tratamiento) de 0.6092 es mayor al nivel de significancia de 0.05, es decir que estadísticamente no hay diferencia y no se rechaza la hipótesis nula.
+
+Nota: Se rechaza la hipótesis nula si el valor de p asociado al resultado observado es igual o menor que el nivel de significación establecido, convencionalmente 0,05.
+
+
+**d)	¿La temperatura de un día a otro es diferente?** 
+La temperatura de un día a otro (bloques) no varia,  el valor p de 0.2460 es superior al nivel de significancia de 0.05. Lo anterior se comprueba con los métodos de comparación de medias de tratamiento en el DBCA, LSD, Tuckey y Dunnet.
+
+
+**Método LSD (diferencia mínima significativa)**
+
+Para investigar cuáles pares de medias son estadísticamente diferentes, se prueban los  pares posibles de hipótesis:
+
+$H_0: \mu_A=\mu_B \quad \text{vs.} \quad H_1: \mu_A 	\neq \mu_B$
+
+$H_0: \mu_A=\mu_C \quad \text{vs.} \quad H_1: \mu_A 	\neq \mu_C$
+
+$H_0: \mu_A=\mu_D \quad \text{vs.} \quad H_1: \mu_A 	\neq \mu_D$
+
+$H_0: \mu_B=\mu_C \quad \text{vs.} \quad H_1: \mu_B 	\neq \mu_C$
+
+$H_0: \mu_B=\mu_D \quad \text{vs.} \quad H_1: \mu_B 	\neq \mu_D$
+
+$H_0: \mu_C=\mu_D \quad \text{vs.} \quad H_1: \mu_C 	\neq \mu_D$
+
+```{r code4, exercise=TRUE} 
+mediat<-tapply(silos$temperatura,silos$Silo,mean)
+mediat
+
+ # valor absoluto de diferencia de medias
+ 
+difAB<-abs(mediat[1]-mediat[2])
+difAC<-abs(mediat[1]-mediat[3])
+difAD<-abs(mediat[1]-mediat[4])
+difAE<-abs(mediat[1]-mediat[5])
+difBC<-abs(mediat[2]-mediat[3])
+difBD<-abs(mediat[2]-mediat[4])
+difBE<-abs(mediat[2]-mediat[5])
+difCD<-abs(mediat[3]-mediat[4])
+difCE<-abs(mediat[3]-mediat[5])
+difDE<-abs(mediat[4]-mediat[5])
+
+
+
+CME <- 1.615
+t<- qt(0.975,anva$Df[3])
+
+LSD <- t*sqrt((2*CME)/4)
+vecdif <- c(difAB,difAC,difAD,difAE,difBC,difBD,difBE,difCD,difCE,difDE)
+nombres <- c("difAB","difAC","difAD","difAE","difBC","difBD","difBE","difCD","difCE","difDE")
+
+for(i in 1:9)
+{
+  if(vecdif[i]>LSD)
+    print(paste(nombres[i],"Significativa"))
+  else
+    print(paste(nombres[i],"No significativa"))
+}
+```
+
+Se concluye que las diferencias entre tratamiento y bloques no son significativas.
+
+**Método de Tukey**
+
+```{r code5, exercise=TRUE} 
+
+amod<-aov(temperatura~Silo+as.factor(Dia))
+compmet<-glht(amod,linfct=mcp(Silo="Tukey"))
+summary(compmet)
+```
+
+Se concluye lo mismo que con el método LSD.
+
+**Método de Dunnet**
+
+```{r code6, exercise=TRUE} 
+
+amod<-aov(temperatura~Silo+as.factor(Dia))
+compmet_control <-glht(amod,linfct=mcp(Silo="Dunnett"))
+summary(compmet_control)
+```
+
+Se corrobora la conclusión de los métodos LSD y Tuckey.
