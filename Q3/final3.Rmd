@@ -1,0 +1,255 @@
+---
+title: "examen final"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(MASS)
+library(car)
+library("PerformanceAnalytics")
+library(lmtest)
+library(glmnet)
+
+```
+
+
+## **Pregunta 3** 
+### *Regresion lineal SWISS*
+#### *Descripcion de datos*
+
+* $\textbf{Fertility }$ Ig. medida com?n de fertilidad estandarizada
+
+* $\textbf{Agriculture }$ % de hombres involucrados en la agricultura como ocupacion
+
+* $\textbf{Examination }$ % de reclutas que reciben la calificacion mas alta en el examen del ejercito
+
+* $\textbf{Education }$ % educacion mas all? de la escuela primaria para reclutas.
+
+* $\textbf{Catholic }$ % 'catolico' (a diferencia de 'protestante').
+
+* $\textbf{Infant.Mortality }$ nacidos vivos que viven menos de 1 anhio.
+
+```{r} 
+data(swiss)
+colnames(swiss)
+str(swiss)
+summary(swiss)
+```
+
+
+```{r code2, exercise=TRUE}
+hist(swiss$Agriculture , col="#01FF70", main="", xlab="Agriculture", ylab="Frecuencia")
+hist(swiss$Examination , col="#01FF70", main="", xlab="Examination", ylab="Frecuencia")
+hist(swiss$Education , col="#01FF70", main="", xlab="Education", ylab="Frecuencia")
+hist(swiss$Catholic , col="#01FF70", main="", xlab="Catholic", ylab="Frecuencia")
+hist(swiss$Infant.Mortality, col="#01FF70", main="", xlab="Mortality", ylab="Frecuencia")
+hist(swiss$Fertility , col="#01FF70", main="", xlab="Fertilidad", ylab="Frecuencia")
+```
+
+
+#### *Regresion lineal*
+
+```{r }
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+summary(lm1)
+
+```
+
+Lo primera observacion es que tenemos un buen modelo y hay varias variables (la mayoria) con una buena
+significancia. Un punto que no deberia suceder pero siempre ocurre es que el intercepto no es 0, esto podria
+causar que los valores estimados de Fertilidad salgan menores a 0, lo cual en la realidad seria imposible pues no
+se puede recaudar negativo.
+
+```{r code4, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+lm1$coefficients
+```
+Lo que significan estos coeficientes, por ejemplo el ?ltimo de la lista Infant.Mortality nos dice que si todas las otros
+otros regresores se mantuvieran constantes y solamente ese cambiara en una unidad, el Fertility se ver?a
+afectado en 1.07705. 
+
+
+#### *Analizado los graficos de la regresion, Valores reales vs valores estimados*
+
+```{r}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+plot(lm1$fitted.values, swiss$Fertility)
+abline(0, 1, col = 2)
+```
+
+#### Supuestos
+
+**Grafico de los residuos - homocedasticidad**
+
+La figura nos permite evaluar la hipotesis de homocedasticidad de los residuos,
+sera aceptable cuando la anchura horizontal del grafico se mantenga razonablemente
+constante. 
+
+Si el p-value del test de Breusch-Pagan es mayor que 0.05 entonces aceptamos la hipotesis
+nula (la varianza de todos los grupos son iguales) y decimos que cumple el
+supuesto de homocedasticidad, caso contrario no se cumple el supuesto de homocedasticidad
+de varianzas. Podemos ver que se acepta la homocedasticidad.
+
+
+```{r}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+
+ncvTest(lm1)
+
+plot(lm1, which=c(3))
+```
+
+
+**Efecto de las variables independientes en la variable dependiente es lineal**
+
+```{r}
+par(mfrow=c(1,1))
+plot(lm1, which=c(1))
+
+```
+
+**Normalidad de los errores**
+
+Los errores residuales son normales y normalmente distribuidos con media cero.
+Aplicando el test de Shapiro-Wilk se probara si se cumple o no el supuesto de normalidad de los
+residuos. Con un valor de 0.93 probamos la normalidad de los datos.
+
+
+```{r}
+
+shapiro.test(lm1$residuals)
+
+par(mfrow=c(1,1))
+plot(lm1, which=c(2))
+
+```
+**Los errores no estan correlacionados**
+
+Autocorrelacion significa la correlacion de los valores de una misma variable ordenados en el tiempo (con datos de
+series temporales) o en el espacio (con datos espaciales). 
+
+```{r}
+
+dwtest(lm1)
+
+par(mfrow=c(1,1))
+plot(lm1, which=c(3))
+
+```
+**Multicolinealidad de los regresores es minima**
+
+Buscaremos variables que esten correlacionadas con las demas y que, por ello, no esten aportando mas al modelo y que podrian estar distorsionando las predicciones generando overfitting.
+```{r}
+
+vif(lm1)
+chart.Correlation(swiss, histogram=FALSE, pch=19)
+
+```
+
+Como podemos apreciar existe una correlacion entre las variables Examination y Education, para revizar la performance de la prediccion
+del modelo, comparamos el $R^2$. Dividimos el conjunto de datos en un grupo de entrenamiento y otro de validacion. 
+
+```{r}
+
+set.seed(1)
+
+x = model.matrix(Fertility~., swiss)[, -c(1)] # matriz de covariables
+y = swiss$Fertility                           # vector respuesta 
+
+train = sample( 1 : nrow( x ) , nrow( x ) / 2 )  # escoge 50% de los datos para entrenamiento
+test = (-train) 
+y.test = y[test]
+
+```
+
+Calculammos el error para toda la poblacion. Para poder calcular R2 de los modelos
+
+```{r}
+
+value_y = swiss[test,1]
+sst <- sum((value_y - mean(value_y))^2)
+
+```
+Calculamos el modelo utilizando una regresion lineal sobre la data de entrenamiento, este modelo sera nuestra linea base.
+
+```{r}
+
+lm2 = lm(Fertility~., swiss[train,])
+summary(lm2)
+lm_predicted = as.numeric(predict(lm2, swiss[test,-1]))
+sse_lm <- sum((lm_predicted - value_y)^2)
+
+rsq_lm = 1 - sse_lm / sst
+rsq_lm
+
+```
+Utilizamos la tecnica de regresion Ridge para calcular un lambda que pueda mejorar la performance del modelo.
+
+```{r}
+
+grid_ridge = 10 ^ seq ( 10, -2, length=100)  #grid de 100 valores para lambda (de 10^10 a 10^{-2})
+ridge.mod = glmnet( x , y , alpha=0, lambda=grid_ridge) #alpha= 0 => regresion ridge
+ridge.mod
+#vamos a escoger lambda usando validación cruzada (5-fold cross validation) para la regresión lasso 
+cv.out_ridge = cv.glmnet( x[ train , ], y [ train ], alpha=0, nfolds=5)
+plot(cv.out_ridge, main="Ridge regression") # Traza la curva de validacion cruzada y las curvas de desviacion estandar superior e inferior, en función de los valores de lambda utilizados.
+best_ridge_lambda = cv.out_ridge$lambda.min #escoge el mejor valor de lambda (el que alcanza el menor ECM - error cuadratico medio -  en la validacion cruzada)
+best_ridge_lambda
+#ECM del mejor modelo en el conjunto de prueba
+ridge.pred = predict(ridge.mod, s=best_ridge_lambda, newx=x[test,])
+mean(( ridge.pred - y.test ) ^ 2)  
+
+# reajusta el modelo usando todos los dados y el mejor lambda
+out_ridge = glmnet( x , y , alpha=0)
+predict(out_ridge, type="coefficients", s = best_ridge_lambda) #muestra los coeficientes del modelo final
+
+ridge_predicted = predict(out_ridge, as.matrix(swiss[test,-1]), s=best_ridge_lambda) 
+ridge_predicted = as.numeric(ridge_predicted)
+ridge_sse <- sum((ridge_predicted - value_y)^2)
+rsq_ridge <- 1 - ridge_sse / sst
+rsq_ridge
+
+```
+
+
+Utilizamos la regresion lasso para tambien evaluar el desempenio del modelo.
+
+```{r}
+grid_lasso = 10 ^ seq ( 10, -2, length=100) #grid de 100 valores para lambda (de 10^10 a 10^{-2})
+lasso.mod = glmnet( x[ train, ], y[ train ], alpha=1, lambda=grid_lasso)
+#vamos a escoger lambda usando validación cruzada (5-fold cross validation) para la regresión lasso 
+cv.out_lasso = cv.glmnet(x[train,],y[train],alpha=1,nfolds=5)
+plot(cv.out_lasso,main="Lasso regression")
+best_lasso_lambda = cv.out_lasso$lambda.min #igual a 20.12811
+best_lasso_lambda
+
+#ECM del mejor modelo en el conjunto de prueba
+lasso.pred=predict(lasso.mod, s=best_ridge_lambda, newx=x[test,])
+mean((lasso.pred - y.test) ^ 2) #igual a 70365.12
+
+#reajusta el modelo usando todos los dados y el mejor lambda
+out_lasso = glmnet( x , y , alpha=1, lambda=grid_lasso)
+lasso.coef=predict(out_lasso, type="coefficients",s=best_lasso_lambda)
+lasso.coef  ##muestra los coeficientes del modelo final
+lasso.coef[lasso.coef!=0] ##muestra los coeficientes no nulos
+
+lasso_predicted = predict(out_lasso, as.matrix(swiss[test,-1]), s=best_lasso_lambda) 
+lasso_predicted = as.numeric(lasso_predicted)
+lasso_sse <- sum((lasso_predicted - value_y) ^ 2)
+rsq_lasso <- 1 - lasso_sse / sst
+rsq_lasso
+
+```
+Como podemos apreciar utilizando la regresion RIDGE y LASSO nuestros modelos mejoran al poder explicar mucho mejor la varianza de la variable
+dependiente, expresando mediante la medida $R^2$.
+```{r}
+
+c(rsq_lm, rsq_ridge, rsq_lasso)
+
+```
+
+
+
+
