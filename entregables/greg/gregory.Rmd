@@ -1,0 +1,359 @@
+---
+title: "Modelos Lineales"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(MASS)
+library(car)
+library("PerformanceAnalytics")
+library(lmtest)
+library(glmnet)
+
+# set working directory
+setwd("/Users/gvalderrama/Documents/pucp/lineal_squad/entregables/greg")
+
+```
+
+# *Gregory Valderrama - 20133303* 
+
+## **Pregunta 1** 
+Demuestre que la varianza del estimador de β por mínimos cuadrados generalizados es $Var(\hat{B})=\sigma^2(X^TV^{-1}X)^{-1}$
+realize la demostracion paso a paso detallando las propiedades utilizadas.
+
+## **Pregunta 2** 
+Suponga que deseamos ajustar un modelo de regresión sin intercepto con mínimos cuadrados ponderados. Suponer que las observaciones son no correlacionadas, pero que tienen varianzas desiguales.
+
+a) Deducir una fórmula general para el estimador de $\beta$ por mínimos cuadrados ponderados. 
+
+b) ¿Cuál es la varianza del estimador del ítem anterior?
+
+## **Pregunta 3** 
+
+El conjunto de datos sobre la medición estandarizada de la fecundidad e indicadores socioeconómicos para cada una de las 47 provincias francófonas de Suiza alrededor del año 1888 se encuentran disponibles en R bajo el nombre swiss. Este conjunto de datos cuenta con 47 observaciones sobre 6 variables, cada una de las cuales está en porcentaje, es decir, en [0, 100].
+Realice un análisis descriptivo y luego ajuste un modelo de regresión lineal considerando como variable respuesta la variable fertilidad y el resto como covariables. Verifique si el modelo cumple con los supuestos. Corrija el problema de multicolinealidad con las técnicas estudiadas en clase e interprete los resultados del modelo final. Para cargar el conjunto de datos use el comando data(swiss) en el R.
+
+### *Descripcion de datos*
+
+* $\textbf{Fertility }$ Ig. medida com?n de fertilidad estandarizada
+
+* $\textbf{Agriculture }$ % de hombres involucrados en la agricultura como ocupacion
+
+* $\textbf{Examination }$ % de reclutas que reciben la calificacion mas alta en el examen del ejercito
+
+* $\textbf{Education }$ % educacion mas all? de la escuela primaria para reclutas.
+
+* $\textbf{Catholic }$ % 'catolico' (a diferencia de 'protestante').
+
+* $\textbf{Infant.Mortality }$ nacidos vivos que viven menos de 1 anhio.
+
+```{r} 
+data(swiss)
+colnames(swiss)
+str(swiss)
+summary(swiss)
+```
+
+#### *Regresion lineal*
+
+```{r }
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+summary(lm1)
+
+```
+
+Lo primera observacion es que tenemos un buen modelo y hay varias variables (la mayoria) con una buena
+significancia. Un punto que no deberia suceder pero siempre ocurre es que el intercepto no es 0, esto podria
+causar que los valores estimados de Fertilidad salgan menores a 0, lo cual en la realidad seria imposible pues no
+se puede recaudar negativo.
+
+```{r code4, exercise=TRUE}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+lm1$coefficients
+```
+Lo que significan estos coeficientes, por ejemplo el ?ltimo de la lista Infant.Mortality nos dice que si todas las otros
+otros regresores se mantuvieran constantes y solamente ese cambiara en una unidad, el Fertility se ver?a
+afectado en 1.07705. 
+
+
+#### *Analizado los graficos de la regresion, Valores reales vs valores estimados*
+
+```{r}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+plot(lm1$fitted.values, swiss$Fertility)
+abline(0, 1, col = 2)
+```
+
+#### Supuestos
+
+**Grafico de los residuos - homocedasticidad**
+
+La figura nos permite evaluar la hipotesis de homocedasticidad de los residuos,
+sera aceptable cuando la anchura horizontal del grafico se mantenga razonablemente
+constante. 
+
+Si el p-value del test de Breusch-Pagan es mayor que 0.05 entonces aceptamos la hipotesis
+nula (la varianza de todos los grupos son iguales) y decimos que cumple el
+supuesto de homocedasticidad, caso contrario no se cumple el supuesto de homocedasticidad
+de varianzas. Podemos ver que se acepta la homocedasticidad.
+
+
+```{r}
+lm1 <- lm(formula = Fertility ~ ., data = swiss)
+
+ncvTest(lm1)
+
+plot(lm1, which=c(3))
+```
+
+
+**Efecto de las variables independientes en la variable dependiente es lineal**
+
+```{r}
+par(mfrow=c(1,1))
+plot(lm1, which=c(1))
+
+```
+
+**Normalidad de los errores**
+
+Los errores residuales son normales y normalmente distribuidos con media cero.
+Aplicando el test de Shapiro-Wilk se probara si se cumple o no el supuesto de normalidad de los
+residuos. Con un valor de 0.93 probamos la normalidad de los datos.
+
+
+```{r}
+
+shapiro.test(lm1$residuals)
+
+par(mfrow=c(1,1))
+plot(lm1, which=c(2))
+
+```
+**Los errores no estan correlacionados**
+
+Autocorrelacion significa la correlacion de los valores de una misma variable ordenados en el tiempo (con datos de
+series temporales) o en el espacio (con datos espaciales). 
+
+```{r}
+
+dwtest(lm1)
+
+par(mfrow=c(1,1))
+plot(lm1, which=c(3))
+
+```
+**Multicolinealidad de los regresores es minima**
+
+Buscaremos variables que esten correlacionadas con las demas y que, por ello, no esten aportando mas al modelo y que podrian estar distorsionando las predicciones generando overfitting.
+```{r}
+
+vif(lm1)
+chart.Correlation(swiss, histogram=FALSE, pch=19)
+
+```
+
+Como podemos apreciar existe una correlacion entre las variables Examination y Education, para revizar la performance de la prediccion
+del modelo, compararemos el $R^2$ con los metodos RIDGE y LASSO para ver si podemos obtener una mejor precision. Dividimos el conjunto de datos en un grupo de entrenamiento y otro de validacion. 
+
+```{r}
+
+set.seed(1)
+
+x = model.matrix(Fertility~., swiss)[, -c(1)] # matriz de covariables
+y = swiss$Fertility                           # vector respuesta 
+
+train = sample( 1 : nrow( x ) , nrow( x ) / 2 )  # escoge 50% de los datos para entrenamiento
+test = (-train) 
+y.test = y[test]
+
+```
+
+Calculammos el error para toda la poblacion. Para poder calcular R2 de los modelos
+
+```{r}
+
+value_y = swiss[test,1]
+sst <- sum((value_y - mean(value_y))^2)
+
+```
+Calculamos el modelo utilizando una regresion lineal sobre la data de entrenamiento, este modelo sera nuestra linea base.
+
+```{r}
+
+lm2 = lm(Fertility~., swiss[train,])
+summary(lm2)
+lm_predicted = as.numeric(predict(lm2, swiss[test,-1]))
+sse_lm <- sum((lm_predicted - value_y)^2)
+
+rsq_lm = 1 - sse_lm / sst
+rsq_lm
+
+```
+Utilizamos la tecnica de regresion Ridge para calcular un lambda que pueda mejorar la performance del modelo.
+
+```{r}
+
+grid_ridge = 10 ^ seq ( 10, -2, length=100)  #grid de 100 valores para lambda (de 10^10 a 10^{-2})
+ridge.mod = glmnet( x , y , alpha=0, lambda=grid_ridge) #alpha= 0 => regresion ridge
+ridge.mod
+#vamos a escoger lambda usando validación cruzada (5-fold cross validation) para la regresión lasso 
+cv.out_ridge = cv.glmnet( x[ train , ], y [ train ], alpha=0, nfolds=5)
+plot(cv.out_ridge, main="Ridge regression") # Traza la curva de validacion cruzada y las curvas de desviacion estandar superior e inferior, en función de los valores de lambda utilizados.
+best_ridge_lambda = cv.out_ridge$lambda.min #escoge el mejor valor de lambda (el que alcanza el menor ECM - error cuadratico medio -  en la validacion cruzada)
+best_ridge_lambda
+#ECM del mejor modelo en el conjunto de prueba
+ridge.pred = predict(ridge.mod, s=best_ridge_lambda, newx=x[test,])
+mean(( ridge.pred - y.test ) ^ 2)  
+
+# reajusta el modelo usando todos los dados y el mejor lambda
+out_ridge = glmnet( x , y , alpha=0)
+predict(out_ridge, type="coefficients", s = best_ridge_lambda) #muestra los coeficientes del modelo final
+
+ridge_predicted = predict(out_ridge, as.matrix(swiss[test,-1]), s=best_ridge_lambda) 
+ridge_predicted = as.numeric(ridge_predicted)
+ridge_sse <- sum((ridge_predicted - value_y)^2)
+rsq_ridge <- 1 - ridge_sse / sst
+rsq_ridge
+
+```
+
+
+Utilizamos la regresion lasso para tambien evaluar el desempenio del modelo.
+
+```{r}
+grid_lasso = 10 ^ seq ( 10, -2, length=100) #grid de 100 valores para lambda (de 10^10 a 10^{-2})
+lasso.mod = glmnet( x[ train, ], y[ train ], alpha=1, lambda=grid_lasso)
+#vamos a escoger lambda usando validación cruzada (5-fold cross validation) para la regresión lasso 
+cv.out_lasso = cv.glmnet(x[train,],y[train],alpha=1,nfolds=5)
+plot(cv.out_lasso,main="Lasso regression")
+best_lasso_lambda = cv.out_lasso$lambda.min #igual a 20.12811
+best_lasso_lambda
+
+#ECM del mejor modelo en el conjunto de prueba
+lasso.pred=predict(lasso.mod, s=best_ridge_lambda, newx=x[test,])
+mean((lasso.pred - y.test) ^ 2) #igual a 70365.12
+
+#reajusta el modelo usando todos los dados y el mejor lambda
+out_lasso = glmnet( x , y , alpha=1, lambda=grid_lasso)
+lasso.coef=predict(out_lasso, type="coefficients",s=best_lasso_lambda)
+lasso.coef  ##muestra los coeficientes del modelo final
+lasso.coef[lasso.coef!=0] ##muestra los coeficientes no nulos
+
+lasso_predicted = predict(out_lasso, as.matrix(swiss[test,-1]), s=best_lasso_lambda) 
+lasso_predicted = as.numeric(lasso_predicted)
+lasso_sse <- sum((lasso_predicted - value_y) ^ 2)
+rsq_lasso <- 1 - lasso_sse / sst
+rsq_lasso
+
+```
+Como podemos apreciar utilizando la regresion RIDGE y LASSO nuestros modelos mejoran al poder explicar mucho mejor la varianza de la variable
+dependiente, expresando mediante la medida $R^2$. 
+```{r}
+
+c(rsq_lm, rsq_ridge, rsq_lasso)
+
+```
+
+
+## **Pregunta 4** 
+El conjunto de datos coleman contiene información sobre 20 escuelas de los estados de Mid-Atlantic y New England, extraídas de una población estudiada por Coleman et al. (1966). Mosteller y Tukey (1977) analizan esta muestra que consiste en mediciones de las siguientes seis variables:
+
+* salaryP: salarios del personal por alumno.
+* fatherWc: porcentaje de padres con trabajo administrativo.
+* sstatus: desviación compuesta del estado socioeconómico: significa para el tamaño de la familia, la integridad de la familia, la educación del padre, la educación de la madre y los artículos del hogar 
+* teacherSc: puntuación media de la prueba verbal del maestro 
+* motherLev: nivel educativo medio de la madre, una unidad equivale a dos años escolares 
+* Y: puntaje de la prueba verbal promedio (variable respuesta)
+
+Este conjunto de datos se encuentra disponible en el paquete de R robustbase, para cargar el conjunto de datos use los siguientes comandos
+library(robustbase) data("coleman") coleman.
+
+* a) Ajuste un modelo de regresión por mínimos cuadrados ordinarios e identifique las observaciones atípicas y reajuste el modelo de regresión eliminando las observaciones identificadas. Interprete los resultados.
+* b) Ajuste un modelo de regresión robusta con las funciones objetivo hechas en clase y compare los resultados con el modelo del ítem a).
+
+## **pregunta 5**
+
+En una empresa lechera se tienen varios silos para almacenar leche (cisternas de 60 000 L). Un aspecto crítico para que se conserve la leche es la temperatura de almacenamiento. Se sospecha que en algunos silos hay problemas, por ello, durante cinco días se decide registrar la temperatura a cierta hora crítica. Obviamente la temperatura de un día a otro es una fuente de variabilidad que podría impactar la variabilidad total. El conjunto de datos se encuentra en el archivo silos.txt.
+
+* a) En este problema, ¿cuál es el factor de tratamiento y cuál el factor de bloque? 
+* b) Suponiendo un DBCA, formule las hipótesis adecuadas y el modelo estadístico. 
+* c) ¿Hay diferencia entre los silos? d) ¿La temperatura de un día a otro es diferente?
+
+
+## **pregunta 6**
+
+Se estudia el rendimiento de un proceso químico. Se piensa que las dos variables más importantes son la presión (psig) y la temperatura (grados centígrados). Se seleccionan tres niveles de cada factor y se lleva a cabo un experimento factorial con dos réplicas. Los datos del rendimiento se encuentran disponibles en el archivo rendimiento.txt.
+
+* a) Suponiendo un análisis factorial formule las hipótesis adecuadas y el modelo estadístico. 
+* b) ¿Los factores y la interacción de los factores son significativas? 
+* c) ¿Bajo qué condiciones debería operarse este proceso?
+
+Nota: recuerde colocar la temperatura y la presión en R as.factor().
+
+## **pregunta 7**
+
+Se realizó un estudio para determinar si existe una diferencia en la resistencia de una fibra de monofilamento producida por tres máquinas diferentes. Se cree que la resistencia de una fibra en libras depende del diámetro (o grosor) en $10^{-3}$ pulgadas. Los datos se encuentran en el archivo *fibra.txt*
+
+* a) Realice un diagrama de dispersión entre la resistencia y el diámetro. Interprete los resultados.  
+* b) Suponiendo un análisis de covariancia formule las hipótesis adecuadas y el modelo estadístico. 
+* c) ¿Las máquinas influyen en la resistencia del monofilamento?
+
+### *a) Realice un diagrama de dispersión entre la resistencia y el diámetro. Interprete los resultados*
+
+
+
+```{r}
+
+datos <-  read.table("fibra.txt", header=TRUE)
+
+```
+
+Diagrama de dispersión
+
+```{r}
+
+plot(x = datos[ , 2],  y = datos[ , 1],  col = datos[ , 3],  pch = 19, cex = 2,
+     xlab = "diametro 10^-3 pulgadas",
+     ylab = "resitencia")
+
+abline(lm(formula = resitencia ~ diametro, data = datos),  col = 4,  lwd = 2)
+```
+
+Se obsera una relación lineal positiva entre la resistencia y el diametro de los microfilamentos.
+
+### *B) Suponiendo un análisis de covariancia formule las hipótesis adecuadas y el modelo estadístico.*
+
+Como se quiere averiguar si la resistencia es afectada por la máquina que desarrollo el monofilamento, se considerará la maquina procedente como los tratamientos. De otro lado, suponiendo un análisis de covarianza se tomará como covariable al diametro de cada observación de microfilamento.
+
+Modelo:  
+
+- Y, variable de respuesta: Resistencia
+- Trat, tratamientos: Máquina
+- X, covariable: Diámetro
+
+Supuestos:  
+
+1. La variable de diametro ha sido medida sin error y no es afectada por los tratamientos
+2. Tanto X como Y tienen varianzas homogéneas en los tratamientos
+3. X e Y tienen distribución normal
+4. La regresión de X sobre y es lineal
+5. Los errores son i.i.d. con distribución $\varepsilon \sim N(0,\sigma^2)$
+
+C) ¿Las máquinas influyen en la resistencia del monofilamento?
+
+Cargamos la libreria que contiene la función del Anova
+
+```{r message = FALSE}
+library(car)
+```
+
+Hacemos un MCO entre la variable respuesta vs. la covariable y el tratamiento. Luego llamamos al Anova para observar los resultados
+```{r}
+lm.pregunta7 <- lm(resitencia ~ diametro + maquina, data = datos)
+(anova.pregunta7 <-Anova(lm.pregunta7, type="III"))
+```
+s
+De acuerdo a los resultados, apreciamos que las diferencias en los tratamientos (máquinas) no son significativas por lo que no influirán en la resistencia de los microfilamentos. Por otra parte, se observa que la covariable de diametro sí influye en el valor de resistencia de forma significativa.
