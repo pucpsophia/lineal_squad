@@ -1,5 +1,5 @@
 ---
-title: "Diseño en bloques completos al azar"
+title: "DiseÃ±o en bloques completos al azar"
 output: 
   learnr::tutorial:
     progressive: true
@@ -18,37 +18,38 @@ attach(silos)
 
 ```
 
+Se puede verificar en el ejercicio 11 de este link: https://es.slideshare.net/albertojeca/diseo-de-bloques-completo-al-azar-1
 
 ## **Pregunta 5** 
-En una empresa lechera se tienen varios silos para almacenar leche (cisternas de 60 000 L). Un aspecto crítico para que se conserve la leche es la temperatura de almacenamiento. Se sospecha que en algunos silos hay problemas, por ello, durante cinco días se decide registrar la temperatura a cierta hora crítica. Obviamente la temperatura de un día a otro es una fuente de variabilidad que podría impactar la variabilidad total. El conjunto de datos se encuentra en el archivo silos.txt.
+En una empresa lechera se tienen varios silos para almacenar leche (cisternas de 60 000 L). Un aspecto crÃ­tico para que se conserve la leche es la temperatura de almacenamiento. Se sospecha que en algunos silos hay problemas, por ello, durante cinco dÃ­as se decide registrar la temperatura a cierta hora crÃ­tica. Obviamente la temperatura de un dÃ­a a otro es una fuente de variabilidad que podrÃ­a impactar la variabilidad total. El conjunto de datos se encuentra en el archivo silos.txt.
 
-**a)	¿En este problema, ¿cuál es el factor de tratamiento y cuál el factor de bloque?** 
+**a)	Â¿En este problema, Â¿cuÃ¡l es el factor de tratamiento y cuÃ¡l el factor de bloque?** 
 
 El factor de tratamiento son los silos de leche A, B, C, D y E.
 
-El factor de bloques son los días de la semana. Los bloques son las variables adicionales que se incorporan de manera explícita en un experimento para lograr una mayor precisión en la comparación.
+El factor de bloques son los dÃ­as de la semana. Los bloques son las variables adicionales que se incorporan de manera explÃ­cita en un experimento para lograr una mayor precisiÃ³n en la comparaciÃ³n.
 
-**b)	Suponiendo un DBCA (Diseño en bloques completos al azar), formule las hipótesis adecuadas y el modelo estadístico.** 
+**b)	Suponiendo un DBCA (DiseÃ±o en bloques completos al azar), formule las hipÃ³tesis adecuadas y el modelo estadÃ­stico.** 
 
-La variable de respuesta es la temperatura de los silos en los que se almacena la leche. Para comparar la temperatura se plantea la siguiente hipótesis sobre la temperatura de los silos:
+La variable de respuesta es la temperatura de los silos en los que se almacena la leche. Para comparar la temperatura se plantea la siguiente hipÃ³tesis sobre la temperatura de los silos:
 
-Modelo estadístico:
+Modelo estadÃ­stico:
   $$Y_{ij}=\mu+\tau_i+y_j+\epsilon_{ij}$$ 
-$Y_{ij}$ corresponde a la medición según el tratamiento y bloque, $\mu$ es la media poblacional de la temperatura, $\tau_i$ el efecto debido al tratamiento e $y_j$ es el efecto debido al bloque y $\epsilon_{ij}$ es el error aleatorio. Los errores se distribuyen de manera normal con
-media cero y varianza constante y son independientes entre sí, $i=1, 2, ...k$ y $j=1, 2, ...b$.
+$Y_{ij}$ corresponde a la mediciÃ³n segÃºn el tratamiento y bloque, $\mu$ es la media poblacional de la temperatura, $\tau_i$ el efecto debido al tratamiento e $y_j$ es el efecto debido al bloque y $\epsilon_{ij}$ es el error aleatorio. Los errores se distribuyen de manera normal con
+media cero y varianza constante y son independientes entre sÃ­, $i=1, 2, ...k$ y $j=1, 2, ...b$.
   
   $$H_0: \mu_A=\mu_B=\mu_C=\mu_D=\mu_E=\mu$$
-  $$H_1: \mu_i \neq \mu_j \quad \text{para algún} \quad i \neq j=(A, B, C, D, E).$$
+  $$H_1: \mu_i \neq \mu_j \quad \text{para algÃºn} \quad i \neq j=(A, B, C, D, E).$$
 Donde:
 
-$H_0$ La hipótesis nula.
+$H_0$ La hipÃ³tesis nula.
 
-$H_1$ La hipótesis alternativa.
+$H_1$ La hipÃ³tesis alternativa.
 
 $\mu_i$ La temperatura media de los silos.
 
 
-**c)	¿Hay diferencia entre los silos?** 
+**c)	Â¿Hay diferencia entre los silos?** 
 
 ```{r code22, exercise=TRUE} 
 # ANOVA
@@ -59,18 +60,18 @@ anva<-anova(mod)
 anva
 ```
 
-El valor p de los silos (tratamiento) de 0.6092 es mayor al nivel de significancia de 0.05, es decir que estadísticamente no hay diferencia y no se rechaza la hipótesis nula.
+El valor p de los silos (tratamiento) de 0.6092 es mayor al nivel de significancia de 0.05, es decir que estadÃ­sticamente no hay diferencia y no se rechaza la hipÃ³tesis nula.
 
-Nota: Se rechaza la hipótesis nula si el valor de p asociado al resultado observado es igual o menor que el nivel de significación establecido, convencionalmente 0,05.
-
-
-**d)	¿La temperatura de un día a otro es diferente?** 
-La temperatura de un día a otro (bloques) no varia,  el valor p de 0.2460 es superior al nivel de significancia de 0.05. Lo anterior se comprueba con los métodos de comparación de medias de tratamiento en el DBCA, LSD, Tuckey y Dunnet.
+Nota: Se rechaza la hipÃ³tesis nula si el valor de p asociado al resultado observado es igual o menor que el nivel de significaciÃ³n establecido, convencionalmente 0,05.
 
 
-**Método LSD (diferencia mínima significativa)**
+**d)	Â¿La temperatura de un dÃ­a a otro es diferente?** 
+La temperatura de un dÃ­a a otro (bloques) no varia,  el valor p de 0.2460 es superior al nivel de significancia de 0.05. Lo anterior se comprueba con los mÃ©todos de comparaciÃ³n de medias de tratamiento en el DBCA, LSD, Tuckey y Dunnet.
 
-Para investigar cuáles pares de medias son estadísticamente diferentes, se prueban los  pares posibles de hipótesis:
+
+**MÃ©todo LSD (diferencia mÃ­nima significativa)**
+
+Para investigar cuÃ¡les pares de medias son estadÃ­sticamente diferentes, se prueban los  pares posibles de hipÃ³tesis:
 
 $H_0: \mu_A=\mu_B \quad \text{vs.} \quad H_1: \mu_A 	\neq \mu_B$
 
@@ -121,7 +122,7 @@ for(i in 1:9)
 
 Se concluye que las diferencias entre tratamiento y bloques no son significativas.
 
-**Método de Tukey**
+**MÃ©todo de Tukey**
 
 ```{r code5, exercise=TRUE} 
 
@@ -130,9 +131,9 @@ compmet<-glht(amod,linfct=mcp(Silo="Tukey"))
 summary(compmet)
 ```
 
-Se concluye lo mismo que con el método LSD.
+Se concluye lo mismo que con el mÃ©todo LSD.
 
-**Método de Dunnet**
+**MÃ©todo de Dunnet**
 
 ```{r code6, exercise=TRUE} 
 
@@ -141,4 +142,4 @@ compmet_control <-glht(amod,linfct=mcp(Silo="Dunnett"))
 summary(compmet_control)
 ```
 
-Se corrobora la conclusión de los métodos LSD y Tuckey.
+Se corrobora la conclusiÃ³n de los mÃ©todos LSD y Tuckey.
