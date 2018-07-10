@@ -1,0 +1,100 @@
+---
+title: "Examen Modelos Lineales"
+author: "Rafael Visa"
+date: "9/7/2018"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Pregunta 4
+El conjunto de datos coleman contiene información sobre 20 escuelas de los estados de Mid- Atlantic y New England, extraídas de una población estudiada por Coleman et al. (1966). Mosteller y Tukey (1977) analizan esta muestra que consiste en mediciones de las siguientes seis variables.
+salaryP: salarios del personal por alumno
+fatherWc: porcentaje de padres con trabajo administrativo
+sstatus: desviación compuesta del estado socioeconómico: significa para el tamaño de la familia, la integridad de la familia, la educación del padre, la educación de la madre y los artículos del hogar
+teacherSc: puntuación media de la prueba verbal del maestro
+motherLev: nivel educativo medio de la madre, una unidad equivale a dos años escolares
+Y: puntaje de la prueba verbal promedio (variable respuesta)
+
+####a) Ajuste un modelo de regresión por mínimos cuadrados ordinarios e identifique las observaciones atípicas y reajuste el modelo de regresión eliminando las observaciones identificadas. Interprete los resultados.
+
+```{r MCO}
+library(robustbase)
+data("coleman")
+coleman
+# Estimando por Mìnimos Cuadrados Ordinarios (MCO) con todas las variables
+MCO = lm(Y ~., data = coleman)
+summary(MCO)
+
+# Graficamente 
+plot(coleman$Y, MCO$fitted.values)+
+abline(a=0,b=1, col="red")
+
+plot(coleman$Y, MCO$residuals)+
+abline(a=0,b=0, col="red")
+# se observan outliers
+
+# Test de heterocedasticidad
+rstandard(MCO)
+library(car)
+ncvTest(MCO) # Presencia de heterocedasticidad
+
+# Identificando los outliers
+plot(cooks.distance(MCO)) 
+
+# considerando un màximo de 4/n para eliminar los outliers
+indices.cook <- which(cooks.distance(MCO) >= 4/nrow(coleman))
+coleman <- coleman[-indices.cook, ]
+
+# ajustando sin outliers
+MCO2 <- lm(formula = Y ~ ., data = coleman)
+summary(MCO2)
+```
+
+## Interpretando los Resultados
+Observando los resultados con $MCO$ como primer modelo de regresión del cuadro de summary(MCO) se extrae que solo una variable (sstatus) se muestra estadísticamente significativo, mientras que el ajuste del modelo parece sugerir un buen ajuste con (Multiple R-squared:  0.9063,	Adjusted R-squared:  0.8728).
+Haciendo un análisis gráfico, se pudo observar presencia de valores atipicos confirmando con la prueba de $ncvTest(MCO)$ indicando presencia de heterocedasticidad, luego procediendo a eliminar los outliers y reajustando el modelo, se observan los resultados con $MCO2$ donde se observa una mejora del modelo con variables estadísticamente significativas y una mejora en el ajuste del modelo con (Multiple R-squared:  0.9633,	Adjusted R-squared:  0.9492).
+
+####b) Ajuste un modelo de regresión robusta con las funciones objetivo hechas en clase y compare los resultados con el modelo del ítem a).
+
+Utilizando los procedimientos realizados en clases vamos a usar el estimador-M de Huber para el modelo de regresión de Duncan, utilizando la función `rlm` (modelo lineal robusto):
+
+```{r, regresion de regresión robusto} 
+library(MASS) 
+mod.robusto <- rlm(Y ~ ., data = coleman)
+summary(mod.robusto)
+```
+
+Observando los resultados obtenidos para la estimación de los parámetros, se puede indicar que la estimación obtenida mediante el modelo $mod.robusto$ se encuentran entre las estimaciones obtenidas mediante los ajustes con mínimos cuadrados $MCO$(con datos completos) y $MCO2$(sin datos atipicos).
+
+En seguida extraemos y graficamos los pesos finales utilizados en el ajuste de $mod.robusto$. 
+
+```{r, }
+#windows()
+plot(mod.robusto$w, ylab="Huber Weight")
+smallweights <- which(mod.robusto$w < 0.8)
+showLabels(1:45, mod.robusto$w, rownames(coleman), method=smallweights, cex.=.6)
+```
+Observando el gráfico y etiquetando las observaciones con pesos inferiores a $0.8$, se puede indicar que las escuelas 3, 17 y 19 se comportan como outliers o valores atípicos.
+
+Adicionalmente, la función $rlm$ según lo indicado en las clases, también puede ajustar el modelo usando el estimador $bisquare$, especificando el argumento $method ="MM"$ la función $rlm$ solicita estimadores bisquare con valores iniciales determinados por una regresión preliminar de influencia acotada. Como se indica a continuación:
+
+```{r,}
+mod.bisquare <- rlm(Y ~., data=coleman, method="MM")
+summary(mod.bisquare)
+```
+
+Comparando los parámetros estimados con el $mod.robusto$ (método de Huber), los coeficientes obtenidos con el modelo $mod.bisquare$ son mayores en todas las variables, gráficamente se tiene:
+
+```{r}
+#windows()
+plot(mod.bisquare$w, ylab="Bisquare Weight")
+showLabels(1:45, mod.bisquare$w, rownames(coleman),method= which(mod.bisquare$w < 0.8), cex.=0.6)
+```
+Con la estimación $bisquare$ se puede decir que, la única observación que se comporta valor atipico es el de la escuela $3$, coencidiendo con el $mod.robusto$ pero excluyendo a las escuelas $17$ y $19$.
+
+## Comparando resultados 
+En general se puede comentar que, las estimaciones obtenidas mediante mínimos cuadrados indican valores extremos, con $MCO$ valores mínimos y con $MCO2$ valores máximos, mientras que las estimaciones obtenidas con regresión robusta indican valores intermedios, casí para toda las variables excepto para $teacherSc$ donde los valores con regresión robusta son mayores a los obtenidos con mínimos cuadrados.
