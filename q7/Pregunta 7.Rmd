@@ -1,0 +1,84 @@
+---
+title: "Pregunta 7 Modelos Lineas"
+author: "Fernando | Carlos"
+date: "9 de julio de 2018"
+output: html_document
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+***
+
+####Pregunta 7
+
+Se realizó un estudio para determinar si existe una diferencia en la resistencia de una fibra de monofilamento producida por tres máquinas diferentes. Se cree que la resistencia de una fibra en libras depende del diámetro (o grosor) en $10^{-3}$ pulgadas. Los datos se encuentran en el archivo *fibra.txt*
+
+***
+
+A) Realice un diagrama de dispersión entre la resistencia y el diámetro. Interprete los resultados.
+
+Importamos y vemos los datos
+```{r}
+#Los pongo así para que no haya problemas eligiendo la ruta en cada pc
+(datos <- data.frame(resistencia = c(36, 41, 39, 42, 49, 40, 48, 39, 45, 44, 35, 37, 42, 34, 32),
+                    diametro = c(20, 25, 24, 25, 32, 22, 28, 22, 30, 28, 21, 23, 26, 21, 15),
+                    maquina = as.factor(c("M1", "M1", "M1", "M1", "M1", 
+                                          "M2", "M2", "M2", "M2", "M2", 
+                                          "M3", "M3", "M3", "M3", "M3"))))
+#sino simplemente
+#datos <- read.table("fibra.txt", header = TRUE)
+```
+
+Diagrama de dispersión
+
+```{r}
+plot(x = datos[ , 2], 
+     y = datos[ , 1], 
+     col = datos[ , 3], 
+     pch = 19, 
+     cex = 2,
+     xlab = "diametro 10^-3 pulgadas",
+     ylab = "resistencia")
+abline(lm(formula = resistencia ~ diametro, data = datos), 
+       col = 4, 
+       lwd = 2)
+```
+
+Se obsera una relación lineal positiva entre la resistencia y el diametro de los microfilamentos.
+
+B) Suponiendo un análisis de covariancia formule las hipótesis adecuadas y el modelo estadístico.
+
+Como se quiere averiguar si la resistencia es afectada por la máquina que desarrollo el monofilamento, se considerará la maquina procedente como los tratamientos. De otro lado, suponiendo un análisis de covarianza se tomará como covariable al diametro de cada observación de microfilamento.
+
+Modelo:  
+
+- Y, variable de respuesta: Resistencia
+- Trat, tratamientos: Máquina
+- X, covariable: Diámetro
+
+Supuestos:  
+
+i) La variable de diametro ha sido medida sin error y no es afectada por los tratamientos
+ii) Tanto X como Y tienen varianzas homogéneas en los tratamientos
+iii) X e Y tienen distribución normal
+iv) La regresión de X sobre y es lineal
+v) Los errores son i.i.d. con distribución $\varepsilon \sim N(0,\sigma^2)$
+
+C) ¿Las máquinas influyen en la resistencia del monofilamento?
+
+Cargamos la libreria que contiene la función del Anova
+
+```{r message = FALSE}
+library(car)
+```
+
+Hacemos un MCO entre la variable respuesta vs. la covariable y el tratamiento. Luego llamamos al Anova para observar los resultados
+```{r}
+lm.pregunta7 <- lm(resistencia ~ diametro + maquina, data = datos)
+(anova.pregunta7 <-Anova(lm.pregunta7, type="III"))
+```
+
+De acuerdo a los resultados, apreciamos que las diferencias en los tratamientos (máquinas) no son significativas por lo que no influirán en la resistencia de los microfilamentos. Por otra parte, se observa que la covariable de diametro sí influye en el valor de resistencia de forma significativa.
