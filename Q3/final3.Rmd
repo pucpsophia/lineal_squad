@@ -154,11 +154,8 @@ chart.Correlation(swiss, histogram=FALSE, pch=19)
 
 ```
 
-Como podemos apreciar existe una correlacion entre las variables Examination y Education, para revizar la performance de la prediccion
-del modelo, comparamos el $R^2$. Dividimos el conjunto de datos en un grupo de entrenamiento y otro de validacion. 
-
-
-Corrigiendo el problema de Multicolinealidad, en clase se realizó un ejercicio similar con la variable pop
+Corrigiendo el problema de Multicolinealidad, en clase se realizó un ejercicio similar con la variable pop,
+para este caso se utilizó la variable Education
 ```
 Fer_Edu <- swiss$Fertility/swiss$Education
 Agri_Edu <- swiss$Agriculture/swiss$Education
@@ -170,6 +167,8 @@ summary(lm(Fer_Edu~Agri_Edu+Exam_Edu+Catho_Edu+Infant_Edu))
 summary(aov(lm(Fer_Edu~Agri_Edu+Exam_Edu+Catho_Edu+Infant_Edu)))
 
 ```
+
+De los gráficos mostrados anteriormente se puede  apreciar existe una correlacion entre las variables Examination y Education, para revizar la performance de la prediccion del modelo, comparamos el $R^2$. Dividimos el conjunto de datos en un grupo de entrenamiento y otro de validacion. 
 
 
 ```{r}
