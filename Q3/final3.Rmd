@@ -159,7 +159,8 @@ del modelo, comparamos el $R^2$. Dividimos el conjunto de datos en un grupo de e
 
 
 # Corrigiendo el problema de multicolinealidad, en clase se realizó un ejercicio similar con la variable pop
-`Fer_Edu <- swiss$Fertility/swiss$Education
+```
+Fer_Edu <- swiss$Fertility/swiss$Education
 Agri_Edu <- swiss$Agriculture/swiss$Education
 Exam_Edu <- swiss$Examination/swiss$Education
 Catho_Edu <- swiss$Catholic/swiss$Education
@@ -167,7 +168,8 @@ Infant_Edu <- swiss$Infant.Mortality/swiss$Education
 
 summary(lm(Fer_Edu~Agri_Edu+Exam_Edu+Catho_Edu+Infant_Edu))
 summary(aov(lm(Fer_Edu~Agri_Edu+Exam_Edu+Catho_Edu+Infant_Edu)))
-``
+
+```
 
 
 ```{r}
