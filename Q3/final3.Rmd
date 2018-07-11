@@ -65,8 +65,7 @@ summary(lm1)
 
 Lo primera observacion es que tenemos un buen modelo y hay varias variables (la mayoria) con una buena
 significancia. Un punto que no deberia suceder pero siempre ocurre es que el intercepto no es 0, esto podria
-causar que los valores estimados de Fertilidad salgan menores a 0, lo cual en la realidad seria imposible pues no
-se puede recaudar negativo.
+causar que los valores estimados de Fertilidad salgan 66 cuando las variables independientes son 0.
 
 ```{r code4, exercise=TRUE}
 lm1 <- lm(formula = Fertility ~ ., data = swiss)
