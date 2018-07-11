@@ -44,7 +44,7 @@ quantile(swiss$Catholic)
 quantile(swiss$Catholic, probs = seq(0, 1, by = 0.1))
 sd(swiss$Catholic)
 ```
-
+# Histogramas
 ```{r code2, exercise=TRUE}
 hist(swiss$Agriculture , col="#01FF70", main="", xlab="Agriculture", ylab="Frecuencia")
 hist(swiss$Examination , col="#01FF70", main="", xlab="Examination", ylab="Frecuencia")
