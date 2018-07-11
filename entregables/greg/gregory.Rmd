@@ -13,8 +13,8 @@ library(lmtest)
 library(glmnet)
 
 # set working directory
-setwd("/Users/gvalderrama/Documents/pucp/lineal_squad/entregables/greg")
-
+#setwd("/Users/gvalderrama/Documents/pucp/lineal_squad/entregables/greg")
+setwd("/Users/gregory/Documents/pucp/lineal_squad/entregables/greg")
 ```
 
 # *Gregory Valderrama - 20133303* 
