@@ -14,19 +14,50 @@ library(GGally)
 # Descriptivo
 data(swiss)
 colnames(swiss)
-
 str(swiss)
 summary(swiss)
 
+# Descriptivos adicionales de la variable (ejem: Catholic)
+summary(swiss$Catholic)
+mean(swiss$Catholic, na.rm = T)
+quantile(swiss$Catholic)
+quantile(swiss$Catholic, probs = seq(0, 1, by = 0.1))
+sd(swiss$Catholic)
+
+##Primer Modelo
 lm1 <- lm(formula =  Fertility ~ Agriculture + Examination  + Education + Catholic + Infant.Mortality, data = swiss)
 summary(lm1)
 lm1$coefficients
 
-vif(lm1)
+#Valores reales vs. los Valores estimados
+plot(lm1$fitted.values, swiss$Fertility) 
+abline(0, 1, col = 2)
 
+#Residuales vs. los Valores estimados
+plot(lm1$fitted.values, lm1$residuals) 
+abline(0, 0, col = 2)
+
+###Colinealidad
+vif(lm1)
 library("PerformanceAnalytics")
 chart.Correlation(swiss, histogram=FALSE, pch=19)
 summary(lm1) # R2 = 0.671 
+
+##2da opcion para ver la Colinealidad
+library(car)
+cor(swiss[,-1]) #matriz
+library(psych)  #De manera gráfica
+pairs.panels(swiss[c(1,2,3,4,5,6)])
+
+# Corrigiendo el problema de multicolinealidad, en clase la profesora realizó lo mismo con la variable pop
+Fer_Edu <- swiss$Fertility/swiss$Education
+Agri_Edu <- swiss$Agriculture/swiss$Education
+Exam_Edu <- swiss$Examination/swiss$Education
+Catho_Edu <- swiss$Catholic/swiss$Education
+Infant_Edu <- swiss$Infant.Mortality/swiss$Education
+
+summary(lm(Fer_Edu~Agri_Edu+Exam_Edu+Catho_Edu+Infant_Edu))
+summary(aov(lm(Fer_Edu~Agri_Edu+Exam_Edu+Catho_Edu+Infant_Edu)))
 
 # sospechamos correlacion y que esto afecta la prediccion de la regresion.
 # para validar esto realizaremos una validacion entre una data de entrenamiento y una de prueba
