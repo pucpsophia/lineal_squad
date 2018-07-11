@@ -49,7 +49,7 @@ cor(swiss[,-1]) #matriz
 library(psych)  #De manera gráfica
 pairs.panels(swiss[c(1,2,3,4,5,6)])
 
-# Corrigiendo el problema de multicolinealidad, en clase la profesora realizó lo mismo con la variable pop
+# Corrigiendo el problema de multicolinealidad en clase se realizó lo mismo con la variable pop
 Fer_Edu <- swiss$Fertility/swiss$Education
 Agri_Edu <- swiss$Agriculture/swiss$Education
 Exam_Edu <- swiss$Examination/swiss$Education
