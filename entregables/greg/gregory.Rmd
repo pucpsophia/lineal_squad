@@ -1,16 +1,20 @@
 ---
-title: "Modelos Lineales"
+title: "Maestria en Estadistica - Modelos Lineales"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+
 library(MASS)
 library(car)
 library("PerformanceAnalytics")
 library(lmtest)
 library(glmnet)
+library(planor)
+library(multcomp)
+
 
 # set working directory
 #setwd("/Users/gvalderrama/Documents/pucp/lineal_squad/entregables/greg")
@@ -21,25 +25,27 @@ setwd("F:/lineal_squad/entregables/greg")
 
 # *Gregory Valderrama - 20133303* 
 
+Las tildes y caracteres en espaniol fueron omitidos por imcompatibilidades tecnicas.
+
 ## **Pregunta 1** 
-Demuestre que la varianza del estimador de Œ≤ por m√≠nimos cuadrados generalizados es $Var(\hat{B})=\sigma^2(X^TV^{-1}X)^{-1}$
+Demuestre que la varianza del estimador de $I^2$ por maximos cuadrados generalizados es $Var(\hat{B})=\sigma^2(X^TV^{-1}X)^{-1}$
 realize la demostracion paso a paso detallando las propiedades utilizadas.
 
 ## **Pregunta 2** 
-Suponga que deseamos ajustar un modelo de regresi√≥n sin intercepto con m√≠nimos cuadrados ponderados. Suponer que las observaciones son no correlacionadas, pero que tienen varianzas desiguales.
+Suponga que deseamos ajustar un modelo de regresion sin intercepto con maximos cuadrados ponderados. Suponer que las observaciones son no correlacionadas, pero que tienen varianzas desiguales.
 
-a) Deducir una f√≥rmula general para el estimador de $\beta$ por m√≠nimos cuadrados ponderados. 
+a) Deducir una formula general para el estimador de $\beta$ por maximos cuadrados ponderados. 
 
-b) ¬øCu√°l es la varianza del estimador del √≠tem anterior?
+b) øCual es la varianza del estimador del item anterior?
 
 ## **Pregunta 3** 
 
-El conjunto de datos sobre la medici√≥n estandarizada de la fecundidad e indicadores socioecon√≥micos para cada una de las 47 provincias franc√≥fonas de Suiza alrededor del a√±o 1888 se encuentran disponibles en R bajo el nombre swiss. Este conjunto de datos cuenta con 47 observaciones sobre 6 variables, cada una de las cuales est√° en porcentaje, es decir, en [0, 100].
-Realice un an√°lisis descriptivo y luego ajuste un modelo de regresi√≥n lineal considerando como variable respuesta la variable fertilidad y el resto como covariables. Verifique si el modelo cumple con los supuestos. Corrija el problema de multicolinealidad con las t√©cnicas estudiadas en clase e interprete los resultados del modelo final. Para cargar el conjunto de datos use el comando data(swiss) en el R.
+El conjunto de datos sobre la medicion estandarizada de la fecundidad e indicadores socioeconomicos para cada una de las 47 provincias francofonas de Suiza alrededor del anhio 1888 se encuentran disponibles en R bajo el nombre swiss. Este conjunto de datos cuenta con 47 observaciones sobre 6 variables, cada una de las cuales est√° en porcentaje, es decir, en [0, 100].
+Realice un analisis descriptivo y luego ajuste un modelo de regresion lineal considerando como variable respuesta la variable fertilidad y el resto como covariables. Verifique si el modelo cumple con los supuestos. Corrija el problema de multicolinealidad con las t√©cnicas estudiadas en clase e interprete los resultados del modelo final. Para cargar el conjunto de datos use el comando data(swiss) en el R.
 
 ### *Descripcion de datos*
 
-* $\textbf{Fertility }$ Ig. medida com?n de fertilidad estandarizada
+* $\textbf{Fertility }$ Ig. medida comun de fertilidad estandarizada
 
 * $\textbf{Agriculture }$ % de hombres involucrados en la agricultura como ocupacion
 
@@ -56,6 +62,8 @@ data(swiss)
 colnames(swiss)
 str(swiss)
 summary(swiss)
+data_scaled <- as.data.frame(scale(swiss))
+boxplot(data_scaled)
 ```
 
 #### *Regresion lineal*
@@ -71,11 +79,11 @@ significancia. Un punto que no deberia suceder pero siempre ocurre es que el int
 causar que los valores estimados de Fertilidad salgan menores a 0, lo cual en la realidad seria imposible pues no
 se puede recaudar negativo.
 
-```{r code4, exercise=TRUE}
+```{r}
 lm1 <- lm(formula = Fertility ~ ., data = swiss)
 lm1$coefficients
 ```
-Lo que significan estos coeficientes, por ejemplo el ?ltimo de la lista Infant.Mortality nos dice que si todas las otros
+Lo que significan estos coeficientes, por ejemplo el ultimo de la lista Infant.Mortality nos dice que si todas las otros
 otros regresores se mantuvieran constantes y solamente ese cambiara en una unidad, el Fertility se ver?a
 afectado en 1.07705. 
 
@@ -268,7 +276,7 @@ El conjunto de datos coleman contiene informacion sobre 20 escuelas de los estad
 
 * salaryP: salarios del personal por alumno.
 * fatherWc: porcentaje de padres con trabajo administrativo.
-* sstatus: desviaci√≥n compuesta del estado socioecon√≥mico: significa para el tama√±o de la familia, la integridad de la familia, la educacion del padre, la educacion de la madre y los articulos del hogar 
+* sstatus: desviacion compuesta del estado socioecon√≥mico: significa para el tamanhio de la familia, la integridad de la familia, la educacion del padre, la educacion de la madre y los articulos del hogar 
 * teacherSc: puntuaci√≥n media de la prueba verbal del maestro 
 * motherLev: nivel educativo medio de la madre, una unidad equivale a dos a√±os escolares 
 * Y: puntaje de la prueba verbal promedio (variable respuesta)
@@ -282,7 +290,7 @@ library(robustbase) data("coleman") coleman.
 library(robustbase)
 data("coleman")
 str(coleman)
-lm1 = lm(Y ~., data = coleman)  # Estimando por MÏnimos Cuadrados Ordinarios (MCO) con todas las variables
+lm1 = lm(Y ~., data = coleman)  # Estimando por MÏnimos Cuadrados Ordinarios 
 summary(lm1)
 
 
@@ -292,7 +300,7 @@ abline(a=0,b=1, col="red")
 plot(coleman$Y, lm1$residuals)
 abline(a=0,b=0, col="red")
 
-ncvTest(lm1) # Presencia de heterocedasticidad
+ncvTest(lm1) # heterocedasticidad
 
 plot(cooks.distance(lm1))  # Identificando los outliers
 ```
@@ -355,22 +363,200 @@ Las estimaciones obtenidas mediante mÌnimos cuadrados indican valores extremos, 
 
 ## **pregunta 5**
 
-En una empresa lechera se tienen varios silos para almacenar leche (cisternas de 60 000 L). Un aspecto critico para que se conserve la leche es la temperatura de almacenamiento. Se sospecha que en algunos silos hay problemas, por ello, durante cinco dias se decide registrar la temperatura a cierta hora critica. Obviamente la temperatura de un d√≠a a otro es una fuente de variabilidad que podria impactar la variabilidad total. El conjunto de datos se encuentra en el archivo silos.txt.
+En una empresa lechera se tienen varios silos para almacenar leche (cisternas de 60 000 L). Un aspecto critico para que se conserve la leche es la temperatura de almacenamiento. Se sospecha que en algunos silos hay problemas, por ello, durante cinco dias se decide registrar la temperatura a cierta hora critica. Obviamente la temperatura de un d√?a a otro es una fuente de variabilidad que podria impactar la variabilidad total. El conjunto de datos se encuentra en el archivo silos.txt.
 
-* a) En este problema, ¬øcu√°l es el factor de tratamiento y cu√°l el factor de bloque? 
-* b) Suponiendo un DBCA, formule las hip√≥tesis adecuadas y el modelo estad√≠stico. 
-* c) ¬øHay diferencia entre los silos? d) ¬øLa temperatura de un d√≠a a otro es diferente?
 
+```{r}
+
+silos <- read.delim("silos.txt")
+
+```
+
+**a) En este problema, øcual es el factor de tratamiento y cual el factor de bloque?**
+
+Factor de tratamiento son los silos de leche A, B, C, D y E.
+
+Factor de bloques es dÌas de la semana. Los bloques son las variables adicionales que se incorporan de manera explÌcita en un experimento para lograr una mayor precision en la comparacion.
+
+**b) Suponiendo un DBCA, formule las hip√≥tesis adecuadas y el modelo estadistico.**
+La variable de respuesta es la temperatura de los silos en los que se almacena la leche. Para comparar la temperatura se plantea la siguiente hipotesis:
+
+Modelo estadÌstico:
+  $$Y_{ij}=\mu+\tau_i+y_j+\epsilon_{ij}$$ 
+  
+Donde $Y_{ij}$ corresponde a la mediciÛn segun el tratamiento y bloque, $\mu$ es la media poblacional de la temperatura, $\tau_i$ el efecto debido al tratamiento e $y_j$ es el efecto debido al bloque y $\epsilon_{ij}$ es el error aleatorio. Los errores se distribuyen de manera normal con
+media cero y varianza constante y son independientes entre sÌ, $i=1, 2, ...k$ y $j=1, 2, ...b$.
+  
+  $$H_0: \mu_A=\mu_B=\mu_C=\mu_D=\mu_E=\mu$$
+  $$H_1: \mu_i \neq \mu_j \quad \text{para alg˙n} \quad i \neq j=(A, B, C, D, E).$$
+  
+Donde:
+
+  $H_0$ La hipÛtesis nula.
+
+  $H_1$ La hipÛtesis alternativa.
+
+$\mu_i$ La temperatura media de los silos.
+
+
+**c) øHay diferencia entre los silos?**
+
+```{r} 
+
+tratamiento <- silos$Silo
+bloque <- silos$Dia
+mod <- lm(temperatura~tratamiento+as.factor(bloque), silos)
+result <- anova(mod)
+result
+```
+
+El valor p de los silos (tratamiento) de 0.6092 es mayor al nivel de significancia de 0.05, es decir que estadÌsticamente no hay diferencia y no se rechaza la hipÛtesis nula. Por lo que decimos que no hay diferencia significativa entre los silos.
+
+**d) øLa temperatura de un dia a otro es diferente?**
+
+**MÈtodo LSD (diferencia mÌnima significativa)**
+
+Para investigar cu·les pares de medias son estadÌsticamente diferentes, se prueban los  pares posibles de hipÛtesis:
+
+$H_0: \mu_A=\mu_B \quad \text{vs.} \quad H_1: \mu_A 	\neq \mu_B$
+
+$H_0: \mu_A=\mu_C \quad \text{vs.} \quad H_1: \mu_A 	\neq \mu_C$
+
+$H_0: \mu_A=\mu_D \quad \text{vs.} \quad H_1: \mu_A 	\neq \mu_D$
+
+$H_0: \mu_B=\mu_C \quad \text{vs.} \quad H_1: \mu_B 	\neq \mu_C$
+
+$H_0: \mu_B=\mu_D \quad \text{vs.} \quad H_1: \mu_B 	\neq \mu_D$
+
+$H_0: \mu_C=\mu_D \quad \text{vs.} \quad H_1: \mu_C 	\neq \mu_D$
+
+```{r}
+
+mediat<-tapply(silos$temperatura,silos$Silo,mean)
+mediat
+
+difAB<-abs(mediat[1]-mediat[2])
+difAC<-abs(mediat[1]-mediat[3])
+difAD<-abs(mediat[1]-mediat[4])
+difAE<-abs(mediat[1]-mediat[5])
+difBC<-abs(mediat[2]-mediat[3])
+difBD<-abs(mediat[2]-mediat[4])
+difBE<-abs(mediat[2]-mediat[5])
+difCD<-abs(mediat[3]-mediat[4])
+difCE<-abs(mediat[3]-mediat[5])
+difDE<-abs(mediat[4]-mediat[5])
+
+CME <- 1.615
+t <- qt(0.975,result$Df[3])
+
+LSD <- t * sqrt(( 2 * CME ) / 4)
+vecdif <- c(difAB,difAC,difAD,difAE,difBC,difBD,difBE,difCD,difCE,difDE)
+nombres <- c("difAB","difAC","difAD","difAE","difBC","difBD","difBE","difCD","difCE","difDE")
+
+for(i in 1:9)
+{
+  if(vecdif[i]>LSD)
+    print(paste(nombres[i],"Significativa"))
+  else
+    print(paste(nombres[i],"No significativa"))
+}
+
+```
+
+Se concluye que las diferencias entre tratamiento y bloques no son significativas.
+
+**MÈtodo de Tukey**
+
+```{r} 
+amod<-aov(temperatura ~ Silo + as.factor(Dia), data = silos )
+compmet<-glht(amod,linfct=mcp(Silo="Tukey"))
+summary(compmet)
+```
+
+Se concluye lo mismo que con el mÈtodo LSD.
+
+**MÈtodo de Dunnet**
+
+```{r} 
+amod<-aov(temperatura~Silo+as.factor(Dia), data = silos)
+compmet_control <-glht(amod,linfct=mcp(Silo="Dunnett"))
+summary(compmet_control)
+```
+
+Se corrobora la conclusiÛn de los mÈtodos LSD y Tuckey.
+
+La temperatura de un dÌa a otro (bloques) no varia,  el valor p de 0.2460 es superior al nivel de significancia de 0.05. Lo anterior se comprueba con los mÈtodos de comparaciÛn de medias de tratamiento en el DBCA, LSD, Tuckey y Dunnet.
 
 ## **pregunta 6**
 
-Se estudia el rendimiento de un proceso qu√≠mico. Se piensa que las dos variables m√°s importantes son la presi√≥n (psig) y la temperatura (grados cent√≠grados). Se seleccionan tres niveles de cada factor y se lleva a cabo un experimento factorial con dos r√©plicas. Los datos del rendimiento se encuentran disponibles en el archivo rendimiento.txt.
+Se estudia el rendimiento de un proceso quimico. Se piensa que las dos variables mas importantes son la presion (psig) y la temperatura (grados centigrados). Se seleccionan tres niveles de cada factor y se lleva a cabo un experimento factorial con dos replicas. Los datos del rendimiento se encuentran disponibles en el archivo rendimiento.txt.
 
-* a) Suponiendo un an√°lisis factorial formule las hip√≥tesis adecuadas y el modelo estad√≠stico. 
-* b) ¬øLos factores y la interacci√≥n de los factores son significativas? 
-* c) ¬øBajo qu√© condiciones deber√≠a operarse este proceso?
+Nota: recuerde colocar la temperatura y la presion en R as.factor().
 
-Nota: recuerde colocar la temperatura y la presi√≥n en R as.factor().
+```{r}
+Rendimiento <- read.table("rendimiento.txt",header=T)
+Rendimiento$temperatura = as.factor(Rendimiento$temperatura)
+Rendimiento$presion = as.factor(Rendimiento$presion)
+str(Rendimiento)
+
+```
+
+**a) Suponiendo un anaisis factorial formule las hipotesis adecuadas y el modelo estadistico.**
+
+```{r}
+Rendimiento
+```
+
+Hipotesis de interes:
+
+$$H_0 : \text{efecto de temperatura (A)} = 0$$
+$$H_0 : \text{efecto de temperatura (A)} \neq 0$$
+
+$$H_0 : \text{efecto de presisn (B)} = 0$$
+$$H_0 : \text{efecto de presisn (B)} \neq 0$$
+
+
+$$H_0 : \text{temperatura x presion (AB)} = 0$$
+$$H_0 : \text{temperatura x presion (AB)} \neq 0$$
+
+
+Estas hipstesis tambien se pueden plantear con los efectos descritos en el modelo:
+
+$$H_0 : \alpha_1 = \alpha_2=...=\alpha_3=0$$
+$$H_1 : \alpha_i \neq 0 \quad \text{para algun i}$$
+
+$$H_0 : \beta_1 = \beta_2=...=\beta_3=0$$
+$$H_1 : \beta_j \neq 0 \quad \text{para algun j}$$
+
+$$H_0 : (\alpha\beta)_{ij} =0 \quad \text{para todo ij}$$
+$$H_0 : (\alpha\beta)_{ij} \neq 0 \quad \text{para algun ij}$$
+
+**b) Los factores y la interaccion de los factores son significativas?**
+
+
+```{r } 
+
+mod <- lm(rendimiento ~ temperatura + presion + temperatura*presion, data = Rendimiento)
+summary(mod)
+
+result <-anova(mod)
+result
+```
+
+En el analisis de varianza se concluye que los 2 efectos A: temperatura, B: presion influyen en el rendimiento, dado que sus efectos resultan significativos. Sin embargo, la interacion entre los factores no es significativa. 
+
+**c) øBajo que condiciones deberia operarse este proceso?**
+
+```{r } 
+
+with(Rendimiento,(interaction.plot(presion, temperatura, rendimiento, type = "b",
+                              pch = c(18,24,22), leg.bty = "o",
+                              main = "Efecto de interaccion presion x temperatura",
+                              xlab = "presion",ylab = "rendimiento")))
+```
+
+
+En el grafico las temperaturas con sus tres niveles. La significancia de la interaccion detectada por el ANOVA se observa en el hecho de que las lineas en la figura tienen pendientes diferentes, lo que indicara la no interaccion de sus factores. Como lo que interesa es maximizar la variable de respuesta, se selecciona Temperatura = 170, Presion =  215  con lo que se maximiza.
 
 ## **pregunta 7**
 
