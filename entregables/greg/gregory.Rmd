@@ -36,7 +36,7 @@ Suponga que deseamos ajustar un modelo de regresion sin intercepto con maximos c
 
 a) Deducir una formula general para el estimador de $\beta$ por maximos cuadrados ponderados. 
 
-b) ¿Cual es la varianza del estimador del item anterior?
+b) ?Cual es la varianza del estimador del item anterior?
 
 ## **Pregunta 3** 
 
@@ -280,11 +280,15 @@ rsq_lasso
 
 ```
 Como podemos apreciar utilizando la regresion RIDGE y LASSO nuestros modelos mejoran al poder explicar mucho mejor la varianza de la variable
-dependiente, expresando mediante la medida $R^2$. 
+dependiente, expresando mediante la medida $R^2$ y $\hat{R}^2$ ajustado. 
 ```{r}
 
-c(rsq_lm, rsq_ridge, rsq_lasso)
-
+r2 = c(rsq_lm, rsq_ridge, rsq_lasso)
+r2
+n = dim(swiss[test, ])[1]
+p = 5 
+rhat_square = 1 - (1 - r2 ) * (n-1) / (n - 5 -1 )
+rhat_square
 ```
 
 
@@ -307,7 +311,7 @@ library(robustbase) data("coleman") coleman.
 library(robustbase)
 data("coleman")
 str(coleman)
-lm1 = lm(Y ~., data = coleman)  # Estimando por Mìnimos Cuadrados Ordinarios 
+lm1 = lm(Y ~., data = coleman)  # Estimando por M?nimos Cuadrados Ordinarios 
 summary(lm1)
 
 
@@ -338,7 +342,7 @@ Podemos apreciar como al retirar los outliers el modelo incrementa su $R^2$ sign
 
 **b) Ajuste un modelo de regresion robusta con las funciones objetivo hechas en clase y compare los resultados con el modelo del item a).**
 
-A continuacion usar el estimador-M de Huber para el modelo de regresion de Duncan, utilizando la función rlm (modelo lineal robusto):
+A continuacion usar el estimador-M de Huber para el modelo de regresion de Duncan, utilizando la funci?n rlm (modelo lineal robusto):
 
 
 ```{r} 
@@ -356,16 +360,16 @@ showLabels(1:45, mod.robusto$w, rownames(coleman), method=smallweights, cex.=.6)
 ```
 
 
-Etiquetando las observaciones con pesos inferiores a 0.8, se puede indicar que las escuelas 3, 17 y 19 se comportan como outliers o valores atípicos.
+Etiquetando las observaciones con pesos inferiores a 0.8, se puede indicar que las escuelas 3, 17 y 19 se comportan como outliers o valores at?picos.
 
-Adicionalmente, la función rlm, también puede ajustar el modelo usando el estimador bisquare, especificando el argumento method ="MM" la función rlm solicita estimadores bisquare con valores iniciales determinados por una regresión preliminar de influencia acotada. Como se indica a continuación:
+Adicionalmente, la funci?n rlm, tambi?n puede ajustar el modelo usando el estimador bisquare, especificando el argumento method ="MM" la funci?n rlm solicita estimadores bisquare con valores iniciales determinados por una regresi?n preliminar de influencia acotada. Como se indica a continuaci?n:
 
 ```{r,}
 mod.bisquare <- rlm(Y ~., data=coleman, method="MM")
 summary(mod.bisquare)
 ```
 
-Comparando los parámetros estimados con el $mod.robusto$ (método de Huber), los coeficientes obtenidos con el modelo $mod.bisquare$ son mayores en todas las variables, gráficamente se tiene:
+Comparando los par?metros estimados con el $mod.robusto$ (m?todo de Huber), los coeficientes obtenidos con el modelo $mod.bisquare$ son mayores en todas las variables, gr?ficamente se tiene:
 
 ```{r}
 plot(mod.bisquare$w, ylab="Bisquare Weight")
@@ -373,14 +377,14 @@ showLabels(1:45, mod.bisquare$w, rownames(coleman),method= which(mod.bisquare$w 
 ```
 
 
-Con la estimación bisquare se puede decir que, la única observación que se comporta valor atipico es el de la escuela 3, coencidiendo con el mod.robusto pero excluyendo a las escuelas 17 y 19.
+Con la estimaci?n bisquare se puede decir que, la ?nica observaci?n que se comporta valor atipico es el de la escuela 3, coencidiendo con el mod.robusto pero excluyendo a las escuelas 17 y 19.
 
 **Comparando resultados**
-Las estimaciones obtenidas mediante mínimos cuadrados indican valores extremos, con lm1 valores mínimos y con lm2 valores máximos, mientras que las estimaciones obtenidas con regresión robusta indican valores intermedios, casí para toda las variables excepto para "teacherSc" donde los valores con regresión robusta son mayores a los obtenidos con mínimos cuadrados.
+Las estimaciones obtenidas mediante m?nimos cuadrados indican valores extremos, con lm1 valores m?nimos y con lm2 valores m?ximos, mientras que las estimaciones obtenidas con regresi?n robusta indican valores intermedios, cas? para toda las variables excepto para "teacherSc" donde los valores con regresi?n robusta son mayores a los obtenidos con m?nimos cuadrados.
 
 ## **pregunta 5**
 
-En una empresa lechera se tienen varios silos para almacenar leche (cisternas de 60 000 L). Un aspecto critico para que se conserve la leche es la temperatura de almacenamiento. Se sospecha que en algunos silos hay problemas, por ello, durante cinco dias se decide registrar la temperatura a cierta hora critica. Obviamente la temperatura de un dÃ?a a otro es una fuente de variabilidad que podria impactar la variabilidad total. El conjunto de datos se encuentra en el archivo silos.txt.
+En una empresa lechera se tienen varios silos para almacenar leche (cisternas de 60 000 L). Un aspecto critico para que se conserve la leche es la temperatura de almacenamiento. Se sospecha que en algunos silos hay problemas, por ello, durante cinco dias se decide registrar la temperatura a cierta hora critica. Obviamente la temperatura de un d??a a otro es una fuente de variabilidad que podria impactar la variabilidad total. El conjunto de datos se encuentra en el archivo silos.txt.
 
 
 ```{r}
@@ -389,34 +393,34 @@ silos <- read.delim("silos.txt")
 
 ```
 
-**a) En este problema, ¿cual es el factor de tratamiento y cual el factor de bloque?**
+**a) En este problema, ?cual es el factor de tratamiento y cual el factor de bloque?**
 
 Factor de tratamiento son los silos de leche A, B, C, D y E.
 
-Factor de bloques es días de la semana. Los bloques son las variables adicionales que se incorporan de manera explícita en un experimento para lograr una mayor precision en la comparacion.
+Factor de bloques es d?as de la semana. Los bloques son las variables adicionales que se incorporan de manera expl?cita en un experimento para lograr una mayor precision en la comparacion.
 
 **b) Suponiendo un DBCA, formule las hipÃ³tesis adecuadas y el modelo estadistico.**
 La variable de respuesta es la temperatura de los silos en los que se almacena la leche. Para comparar la temperatura se plantea la siguiente hipotesis:
 
-Modelo estadístico:
+Modelo estad?stico:
   $$Y_{ij}=\mu+\tau_i+y_j+\epsilon_{ij}$$ 
   
-Donde $Y_{ij}$ corresponde a la medición segun el tratamiento y bloque, $\mu$ es la media poblacional de la temperatura, $\tau_i$ el efecto debido al tratamiento e $y_j$ es el efecto debido al bloque y $\epsilon_{ij}$ es el error aleatorio. Los errores se distribuyen de manera normal con
-media cero y varianza constante y son independientes entre sí, $i=1, 2, ...k$ y $j=1, 2, ...b$.
+Donde $Y_{ij}$ corresponde a la medici?n segun el tratamiento y bloque, $\mu$ es la media poblacional de la temperatura, $\tau_i$ el efecto debido al tratamiento e $y_j$ es el efecto debido al bloque y $\epsilon_{ij}$ es el error aleatorio. Los errores se distribuyen de manera normal con
+media cero y varianza constante y son independientes entre s?, $i=1, 2, ...k$ y $j=1, 2, ...b$.
   
   $$H_0: \mu_A=\mu_B=\mu_C=\mu_D=\mu_E=\mu$$
-  $$H_1: \mu_i \neq \mu_j \quad \text{para algún} \quad i \neq j=(A, B, C, D, E).$$
+  $$H_1: \mu_i \neq \mu_j \quad \text{para alg?n} \quad i \neq j=(A, B, C, D, E).$$
   
 Donde:
 
-  $H_0$ La hipótesis nula.
+  $H_0$ La hip?tesis nula.
 
-  $H_1$ La hipótesis alternativa.
+  $H_1$ La hip?tesis alternativa.
 
 $\mu_i$ La temperatura media de los silos.
 
 
-**c) ¿Hay diferencia entre los silos?**
+**c) ?Hay diferencia entre los silos?**
 
 ```{r} 
 
@@ -427,13 +431,13 @@ result <- anova(mod)
 result
 ```
 
-El valor p de los silos (tratamiento) de 0.6092 es mayor al nivel de significancia de 0.05, es decir que estadísticamente no hay diferencia y no se rechaza la hipótesis nula. Por lo que decimos que no hay diferencia significativa entre los silos.
+El valor p de los silos (tratamiento) de 0.6092 es mayor al nivel de significancia de 0.05, es decir que estad?sticamente no hay diferencia y no se rechaza la hip?tesis nula. Por lo que decimos que no hay diferencia significativa entre los silos.
 
-**d) ¿La temperatura de un dia a otro es diferente?**
+**d) ?La temperatura de un dia a otro es diferente?**
 
-**Método LSD (diferencia mínima significativa)**
+**M?todo LSD (diferencia m?nima significativa)**
 
-Para investigar cuáles pares de medias son estadísticamente diferentes, se prueban los  pares posibles de hipótesis:
+Para investigar cu?les pares de medias son estad?sticamente diferentes, se prueban los  pares posibles de hip?tesis:
 
 $H_0: \mu_A=\mu_B \quad \text{vs.} \quad H_1: \mu_A 	\neq \mu_B$
 
@@ -482,7 +486,7 @@ for(i in 1:9)
 
 Se concluye que las diferencias entre tratamiento y bloques no son significativas.
 
-**Método de Tukey**
+**M?todo de Tukey**
 
 ```{r} 
 amod<-aov(temperatura ~ Silo + as.factor(Dia), data = silos )
@@ -490,9 +494,9 @@ compmet<-glht(amod,linfct=mcp(Silo="Tukey"))
 summary(compmet)
 ```
 
-Se concluye lo mismo que con el método LSD.
+Se concluye lo mismo que con el m?todo LSD.
 
-**Método de Dunnet**
+**M?todo de Dunnet**
 
 ```{r} 
 amod<-aov(temperatura~Silo+as.factor(Dia), data = silos)
@@ -500,9 +504,9 @@ compmet_control <-glht(amod,linfct=mcp(Silo="Dunnett"))
 summary(compmet_control)
 ```
 
-Se corrobora la conclusión de los métodos LSD y Tuckey.
+Se corrobora la conclusi?n de los m?todos LSD y Tuckey.
 
-La temperatura de un día a otro (bloques) no varia. Lo anterior se comprueba con los métodos de comparación de medias de tratamiento en el DBCA, LSD, Tuckey y Dunnet.
+La temperatura de un d?a a otro (bloques) no varia. Lo anterior se comprueba con los m?todos de comparaci?n de medias de tratamiento en el DBCA, LSD, Tuckey y Dunnet.
 
 ## **pregunta 6**
 
@@ -562,7 +566,7 @@ result
 
 En el analisis de varianza se concluye que los 2 efectos A: temperatura, B: presion influyen en el rendimiento, dado que sus efectos resultan significativos. Sin embargo, la interacion entre los factores no es significativa. 
 
-**c) ¿Bajo que condiciones deberia operarse este proceso?**
+**c) ?Bajo que condiciones deberia operarse este proceso?**
 
 ```{r } 
 
@@ -581,7 +585,7 @@ Se realiza un estudio para determinar si existe una diferencia en la resistencia
 
 * a) Realice un diagrama de dispersion entre la resistencia y el diametro. Interprete los resultados.  
 * b) Suponiendo un anaisis de covariancia formule las hipotesis adecuadas y el modelo estadistico. 
-* c) ¿Las maquinas influyen en la resistencia del monofilamento?
+* c) ?Las maquinas influyen en la resistencia del monofilamento?
 
 
 **a) Realice un diagrama de dispersiÃ³n entre la resistencia y el diÃ¡metro. Interprete los resultados**
@@ -618,7 +622,7 @@ Supuestos:
 4. La regresion de X sobre Y es lineal
 5. Los errores son identicamente distribuidos con distribuciÃ³n $\varepsilon \sim N(0,\sigma^2)$
 
-**C) ¿Las maquinas influyen en la resistencia del monofilamento?**
+**C) ?Las maquinas influyen en la resistencia del monofilamento?**
 
 Cargamos la libreria que contiene la funcion del Anova
 
