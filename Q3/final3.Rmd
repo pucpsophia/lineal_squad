@@ -149,13 +149,13 @@ plot(lm1, which=c(3))
 Buscaremos variables que esten correlacionadas con las demas y que, por ello, no esten aportando mas al modelo y que podrian estar distorsionando las predicciones generando overfitting.
 ```{r}
 
-vif(lm1)
+vif(lm1) #factor inflacionario de varianza
 chart.Correlation(swiss, histogram=FALSE, pch=19)
 
 ```
 
 Corrigiendo el problema de Multicolinealidad, en clase se realizó un ejercicio similar con la variable pop,
-para este caso se utilizó la variable Education
+para este caso se está utilizando la variable Education
 ```
 Fer_Edu <- swiss$Fertility/swiss$Education
 Agri_Edu <- swiss$Agriculture/swiss$Education
