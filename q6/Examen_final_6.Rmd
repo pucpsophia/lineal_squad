@@ -101,10 +101,9 @@ with(Rendimiento,(interaction.plot(presion, temperatura, rendimiento, type = "b"
 
 Nótese que aparecen tantas líneas como niveles tenga el factor que se dibuja en la parte de arriba, que en este caso es la temperatura con sus tres niveles. La significancia de la interaccion detectada por el ANOVA se observa en el hecho de que las líneas en la figura tienen pendientes relativamente diferentes, lo que indicaría la no interacción de sus factores. Como lo que interesa es maximizar la variable de respuesta,se selecciona:
 
-Presión = 170 psig
+Temperatura= 170°C
 
-Temperatura =  215:C
-
+Presión=  215 psig 
 
 
 

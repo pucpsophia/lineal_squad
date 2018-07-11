@@ -44,7 +44,7 @@ quantile(swiss$Catholic)
 quantile(swiss$Catholic, probs = seq(0, 1, by = 0.1))
 sd(swiss$Catholic)
 ```
-
+# Histogramas
 ```{r code2, exercise=TRUE}
 hist(swiss$Agriculture , col="#01FF70", main="", xlab="Agriculture", ylab="Frecuencia")
 hist(swiss$Examination , col="#01FF70", main="", xlab="Examination", ylab="Frecuencia")
@@ -149,13 +149,27 @@ plot(lm1, which=c(3))
 Buscaremos variables que esten correlacionadas con las demas y que, por ello, no esten aportando mas al modelo y que podrian estar distorsionando las predicciones generando overfitting.
 ```{r}
 
-vif(lm1)
+vif(lm1) #factor inflacionario de varianza
 chart.Correlation(swiss, histogram=FALSE, pch=19)
 
 ```
 
-Como podemos apreciar existe una correlacion entre las variables Examination y Education, para revizar la performance de la prediccion
-del modelo, comparamos el $R^2$. Dividimos el conjunto de datos en un grupo de entrenamiento y otro de validacion. 
+Corrigiendo el problema de Multicolinealidad, en clase se realizó un ejercicio similar con la variable pop,
+para este caso se está utilizando la variable Education
+```
+Fer_Edu <- swiss$Fertility/swiss$Education
+Agri_Edu <- swiss$Agriculture/swiss$Education
+Exam_Edu <- swiss$Examination/swiss$Education
+Catho_Edu <- swiss$Catholic/swiss$Education
+Infant_Edu <- swiss$Infant.Mortality/swiss$Education
+
+summary(lm(Fer_Edu~Agri_Edu+Exam_Edu+Catho_Edu+Infant_Edu))
+summary(aov(lm(Fer_Edu~Agri_Edu+Exam_Edu+Catho_Edu+Infant_Edu)))
+
+```
+
+De los gráficos mostrados anteriormente se puede  apreciar existe una correlacion entre las variables Examination y Education, para revizar la performance de la prediccion del modelo, comparamos el $R^2$. Dividimos el conjunto de datos en un grupo de entrenamiento y otro de validacion. 
+
 
 ```{r}
 
