@@ -168,8 +168,26 @@ chart.Correlation(swiss, histogram=FALSE, pch=19)
 
 ```
 
+
+
 Como podemos apreciar existe una correlacion entre las variables Examination y Education, para revizar la performance de la prediccion
-del modelo, compararemos el $R^2$ con los metodos RIDGE y LASSO para ver si podemos obtener una mejor precision. Dividimos el conjunto de datos en un grupo de entrenamiento y otro de validacion. 
+del modelo, 
+
+Una primera tecnica vista en clase es la de la transformacion de las variables para este caso se esta utilizando la variable Education:
+```
+Fer_Edu <- swiss$Fertility/swiss$Education
+Agri_Edu <- swiss$Agriculture/swiss$Education
+Exam_Edu <- swiss$Examination/swiss$Education
+Catho_Edu <- swiss$Catholic/swiss$Education
+Infant_Edu <- swiss$Infant.Mortality/swiss$Education
+
+summary(lm(Fer_Edu~Agri_Edu+Exam_Edu+Catho_Edu+Infant_Edu))
+summary(aov(lm(Fer_Edu~Agri_Edu+Exam_Edu+Catho_Edu+Infant_Edu)))
+
+```
+Como podemos ver se incrementa de manere significativa el valor de $R^2$, mas aun existen otras tecnicas que explicaremos a continuacion.
+
+Compararemos el $R^2$ con los metodos RIDGE y LASSO para ver si podemos obtener una mejor precision. Dividimos el conjunto de datos en un grupo de entrenamiento y otro de validacion. 
 
 ```{r}
 
@@ -277,7 +295,7 @@ El conjunto de datos coleman contiene informacion sobre 20 escuelas de los estad
 * salaryP: salarios del personal por alumno.
 * fatherWc: porcentaje de padres con trabajo administrativo.
 * sstatus: desviacion compuesta del estado socioeconÃ³mico: significa para el tamanhio de la familia, la integridad de la familia, la educacion del padre, la educacion de la madre y los articulos del hogar 
-* teacherSc: puntuaciÃ³n media de la prueba verbal del maestro 
+* teacherSc: puntuacion media de la prueba verbal del maestro 
 * motherLev: nivel educativo medio de la madre, una unidad equivale a dos aÃ±os escolares 
 * Y: puntaje de la prueba verbal promedio (variable respuesta)
 
@@ -485,7 +503,7 @@ summary(compmet_control)
 
 Se corrobora la conclusión de los métodos LSD y Tuckey.
 
-La temperatura de un día a otro (bloques) no varia,  el valor p de 0.2460 es superior al nivel de significancia de 0.05. Lo anterior se comprueba con los métodos de comparación de medias de tratamiento en el DBCA, LSD, Tuckey y Dunnet.
+La temperatura de un día a otro (bloques) no varia. Lo anterior se comprueba con los métodos de comparación de medias de tratamiento en el DBCA, LSD, Tuckey y Dunnet.
 
 ## **pregunta 6**
 
