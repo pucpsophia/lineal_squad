@@ -38,11 +38,12 @@ str(swiss)
 summary(swiss)
 ```
 # Descriptivo de la variable Catholic
-summary(swiss$Catholic)
+```summary(swiss$Catholic)
 mean(swiss$Catholic, na.rm = T)
 quantile(swiss$Catholic)
 quantile(swiss$Catholic, probs = seq(0, 1, by = 0.1))
 sd(swiss$Catholic)
+```
 
 ```{r code2, exercise=TRUE}
 hist(swiss$Agriculture , col="#01FF70", main="", xlab="Agriculture", ylab="Frecuencia")
